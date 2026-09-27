@@ -3,7 +3,7 @@ import { marketAbi } from './chain.js'
 import { usd6, type Prize, type State } from './observe.js'
 
 const num = (k: string, d: number) => Number(process.env[k] ?? d)
-const usdc = (x: number) => BigInt(Math.round(x * 1e6)) * 10n ** 12n // USD → native USDC, 18 dp
+export const usdc = (x: number) => BigInt(Math.round(x * 1e6)) * 10n ** 12n // USD → native USDC, 18 dp
 
 // Knobs. The contract's band, sinks and daily cap are the hard limits; these only shape proposals.
 export const CFG = {
@@ -47,46 +47,81 @@ export function confirmed(s: State, cmc: Record<string, number>) {
   return { ok, notes }
 }
 
-/** The deterministic plan: relay prices, reprice drifted tiers, restock low pools from surplus. */
+const priceOf = (s: State, ok: string[], sym: string) =>
+  ok.includes(sym) && s.stocks[sym].oracle ? s.stocks[sym].oracle : s.stocks[sym].market
+
+/** Copy confirmed oracle prices that drifted onto the testnet market. Mechanical, never a model call. */
+export function relay(s: State, ok: string[]): Action | undefined {
+  const stale = Object.entries(s.stocks).filter(
+    ([sym, st]) => ok.includes(sym) && st.oracle && gapBps(Number(st.market), Number(st.oracle)) > CFG.relayBps,
+  )
+  if (!stale.length) return
+  return { kind: 'relay', symbols: stale.map(([k]) => k), tokens: stale.map(([, st]) => st.token), prices: stale.map(([, st]) => st.oracle) }
+}
+
+/** Expected payout of the standard table in bps of a $0.10 box: 8 × (80×0.05 + 12×0.30 + 1×2) / 1000. */
+export const BASE_PAYOUT_BPS = 7680
+
+/** The standard table, every tier's dollar value scaled to hit `targetBps`; share amounts from live prices. */
+export function table(s: State, ok: string[], targetBps = BASE_PAYOUT_BPS): Prize[] {
+  const bySym = Object.entries(s.stocks)
+  const t: Prize[] = []
+  for (const tier of TIERS)
+    for (const [sym, st] of bySym) {
+      const usd = (tier.usd6 * BigInt(targetBps)) / BigInt(BASE_PAYOUT_BPS)
+      t.push({ token: st.token, weight: tier.weight, amount: (usd * 10n ** 18n) / priceOf(s, ok, sym) })
+    }
+  t.push({ token: ZERO, weight: EMPTY, amount: 0n })
+  return t
+}
+
+/** Largest tier drift of the live table from `targetBps`, in bps (Infinity if it isn't our shape). */
+export function drift(s: State, ok: string[], targetBps = BASE_PAYOUT_BPS) {
+  let worst = 0
+  for (const row of s.table) {
+    if (row.token === ZERO) continue
+    const sym = Object.keys(s.stocks).find((k) => s.stocks[k].token.toLowerCase() === row.token.toLowerCase())
+    const tier = TIERS.find((t) => t.weight === row.weight)
+    if (!sym || !tier) return Infinity
+    const want = (Number(tier.usd6) * targetBps) / BASE_PAYOUT_BPS
+    worst = Math.max(worst, gapBps(Number(usd6(row.amount, priceOf(s, ok, sym))), want))
+  }
+  return s.table.length === TIERS.length * Object.keys(s.stocks).length + 1 ? worst : Infinity
+}
+
+/** USDC the operator may spend now: above the refund reserve and inside today's cap. */
+export function budget(s: State) {
+  const reserve = BigInt(s.pending.length) * s.boxPrice + usdc(CFG.reserveUsd)
+  const free = s.usdc > reserve ? s.usdc - reserve : 0n
+  const cap = s.cap - s.spentToday
+  return { reserve, budget: free < cap ? free : cap }
+}
+
+/** Pool value per stock in USD, at the prices this cycle acts on. */
+export const poolUsd = (s: State, ok: string[]) =>
+  Object.fromEntries(Object.entries(s.stocks).map(([sym, st]) => [sym, Number(usd6(st.pool, priceOf(s, ok, sym))) / 1e6]))
+
+export function restock(s: State, symbol: string, amount: bigint): Action {
+  const token = s.stocks[symbol].token
+  return { kind: 'restock', symbol, token, amount, data: encodeFunctionData({ abi: marketAbi, functionName: 'buy', args: [token] }) }
+}
+
+/** The deterministic plan (and the floor when no model answers): relay, reprice drift, restock low pools. */
 export function plan(s: State, ok: string[]): Action[] {
   const actions: Action[] = []
-  const bySym = Object.entries(s.stocks)
-
-  const stale = bySym.filter(([sym, st]) => ok.includes(sym) && st.oracle && gapBps(Number(st.market), Number(st.oracle)) > CFG.relayBps)
-  if (stale.length)
-    actions.push({ kind: 'relay', symbols: stale.map(([k]) => k), tokens: stale.map(([, st]) => st.token), prices: stale.map(([, st]) => st.oracle) })
-  // Prices the table and the pool are judged at, after this cycle's relay.
-  const px = (sym: string) => (ok.includes(sym) && s.stocks[sym].oracle ? s.stocks[sym].oracle : s.stocks[sym].market)
-
+  const r = relay(s, ok)
+  if (r) actions.push(r)
   // Reprice only when every stock is confirmed: a table priced on one bad print is the failure to avoid.
-  if (ok.length === bySym.length) {
-    const table: Prize[] = []
-    for (const t of TIERS) for (const [sym, st] of bySym) table.push({ token: st.token, weight: t.weight, amount: (t.usd6 * 10n ** 18n) / px(sym) })
-    table.push({ token: ZERO, weight: EMPTY, amount: 0n })
-    const drifted = s.table.some((row) => {
-      if (row.token === ZERO) return false
-      const sym = bySym.find(([, st]) => st.token.toLowerCase() === row.token.toLowerCase())?.[0]
-      const tier = TIERS.find((t) => t.weight === row.weight)
-      if (!sym || !tier) return true // not our shape: rebuild
-      return gapBps(Number(usd6(row.amount, px(sym))), Number(tier.usd6)) > CFG.driftBps
-    })
-    if (drifted || s.table.length !== table.length) actions.push({ kind: 'reprice', table })
-  }
-
-  const reserve = BigInt(s.pending.length) * s.boxPrice + usdc(CFG.reserveUsd)
-  let budget = s.usdc > reserve ? s.usdc - reserve : 0n
-  if (s.cap - s.spentToday < budget) budget = s.cap - s.spentToday
-  const low = bySym
-    .filter(([sym]) => ok.includes(sym))
-    .map(([sym, st]) => ({ sym, st, value: Number(usd6(st.pool, px(sym))) / 1e6 }))
-    .filter((x) => x.value < CFG.poolLowUsd)
-    .sort((a, b) => a.value - b.value)
-  for (const { sym, st, value } of low) {
-    let amount = usdc(CFG.poolTargetUsd - value)
-    if (amount > budget) amount = budget
+  if (ok.length === Object.keys(s.stocks).length && drift(s, ok) > CFG.driftBps) actions.push({ kind: 'reprice', table: table(s, ok) })
+  let { budget: left } = budget(s)
+  const pools = poolUsd(s, ok)
+  const low = ok.filter((sym) => pools[sym] < CFG.poolLowUsd).sort((a, b) => pools[a] - pools[b])
+  for (const sym of low) {
+    let amount = usdc(CFG.poolTargetUsd - pools[sym])
+    if (amount > left) amount = left
     if (amount === 0n) break
-    budget -= amount
-    actions.push({ kind: 'restock', symbol: sym, token: st.token, amount, data: encodeFunctionData({ abi: marketAbi, functionName: 'buy', args: [st.token] }) })
+    left -= amount
+    actions.push(restock(s, sym, amount))
   }
   return actions
 }
