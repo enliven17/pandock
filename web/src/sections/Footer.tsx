@@ -15,6 +15,7 @@ const BUILT_ON = [
   ['Arc', 'https://arc.io'],
   ['USDC by Circle', 'https://www.circle.com/usdc'],
   ['ArcStocks', 'https://arcstocks.app'],
+  ['CoinMarketCap', 'https://coinmarketcap.com/api/'],
   ['Robinhood Chain', 'https://docs.robinhood.com/chain/'],
 ]
 
@@ -69,6 +70,7 @@ export default function Footer() {
             <span className="caption-strong">Explore</span>
             <a href="#how">How it works</a>
             <a href="#prizes">What’s inside</a>
+            <a href="#market">Market</a>
             <a href="#odds">The odds</a>
           </div>
           <div className="footer-col">
