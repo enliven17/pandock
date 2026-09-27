@@ -38,7 +38,7 @@ This is the "continuous audit" from the Tameion prior-art section: a reviewer re
 
 - **Network**: Arc Testnet first (Circle agent wallet, policy limits and USYC are available there); a mainnet mirror on real ArcStocks later if time allows.
 - **Human approvals**: dashboard + Telegram.
-- **Model**: Gemini.
+- **Model**: Gemini, spread across several models by role (see *Model routing*).
 
 ## Architecture
 
@@ -57,6 +57,26 @@ This is the "continuous audit" from the Tameion prior-art section: a reviewer re
 - **Approve**: escalations land in a queue shown on the Treasurer page and sent to a Telegram bot with Approve / Reject buttons; whichever answers first wins, and the answer is logged with who gave it.
 - **Act**: transactions go out from a Circle agent wallet (`circle wallet execute …`), so the wallet policy applies to every call.
 - **Market**: mainnet uses the ArcStocks hub (`requestBuy`). Arc Testnet has no ArcStocks, so a small `MockMarket` sells mock `STOCK.arc` tokens at prices relayed from the ArcStocks oracle on mainnet; the agent's code path is the same behind one interface.
+
+## Model routing
+
+Gemini rate limits are **per model and per project** (RPM, input TPM, RPD; RPD resets at midnight Pacific), not per API key, and the exact numbers depend on the account's tier and are only shown in AI Studio. So the agent spreads its calls across models by role, and treats every limit as configuration plus feedback rather than a hard-coded number.
+
+| Role | When it runs | Primary | Falls back to |
+|---|---|---|---|
+| **Planner**: proposes restock / reprice / reserve / yield actions via function calling | once per cycle, only if the observed state changed | `gemini-3.8-flash` | `gemini-3.7-flash` → `gemini-3.6-flash` |
+| **Scribe**: writes the one-paragraph reason for the log and the Telegram message | after each executed or escalated action | `gemini-3.5-flash-lite` | `gemini-3.1-flash-lite` |
+| **Reviewer**: second opinion before anything is escalated or above the soft threshold | rarely, only on escalations | `gemini-3.1-pro-preview` | `gemini-3.8-flash` |
+
+How the router keeps clear of limits:
+- **Per-model token buckets** for RPM and RPD, sized from env (`GEMINI_LIMITS=model:rpm:rpd,…`) so they match the project's real tier.
+- **429 handling**: on `RESOURCE_EXHAUSTED` the model is benched for the `retryDelay` the error returns (or exponential backoff with jitter), and the role moves to the next model in its chain.
+- **Fewer calls in the first place**: cycles are event-driven plus a slow heartbeat; if the state hash hasn't changed since the last cycle the planner isn't called at all. The static system prompt and tool schemas use context caching.
+- **Deterministic floor**: if every model in a role's chain is exhausted, the agent does not guess. Money-moving actions fall back to a rule-based safe policy (no new spend; only refunds and reveals that are already owed), and the cycle is logged as "model unavailable".
+- Preview models (`gemini-3.1-pro-preview`) have tighter limits, which is why only the rare Reviewer role uses one.
+- More keys in the same project add no quota; spreading across several Google Cloud projects to multiply limits is not part of the design.
+
+Model IDs are from Google's model list as of 2026-09-25; they live in one config file so they can be swapped without touching the agent.
 
 ## Circle stack used
 
@@ -84,7 +104,7 @@ Genuine usage, not a synthetic dataset:
 
 - USYC on Arc Testnet needs the agent wallet **allowlisted by Circle Support** (≈24h). File the ticket as soon as the wallet exists.
 - Circle agent wallets list Arc Testnet but not Arc mainnet; a mainnet mirror would run from a plain key with the contract policy as the only hard limit.
-- Exact Gemini model and its function-calling limits: pin from Google's current docs at implementation time.
+- The project's actual per-model RPM/RPD (AI Studio → Rate limit) to size the buckets.
 
 ## Timeline (Tameion: Sep 27 – Oct 10)
 
