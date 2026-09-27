@@ -1,0 +1,19 @@
+{
+  "name": "pandock-treasurer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx --env-file=.env src/index.ts",
+    "once": "tsx --env-file=.env src/index.ts --once",
+    "approve": "tsx --env-file=.env src/approve.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "viem": "^2.56.9"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
