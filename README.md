@@ -21,12 +21,13 @@ Randomness: commit-reveal on the hash of the block after `open`, read through `b
 
 ## Treasurer agent (`agent/`, Node + viem)
 
-Runs the pool as the contract's operator (design: `docs/agent.md`). Every cycle it observes the pool, prices and open liabilities, cross-checks the ArcStocks oracle against CoinMarketCap, then relays prices to the testnet market, reprices drifted tiers and restocks low pools from surplus sale proceeds. Restocks above the soft threshold wait for a human. Each cycle is appended to a hash-chained log (`agent/log/decisions.jsonl`) and its head is anchored on-chain with `anchor`.
+Runs the pool as the contract's operator (design: `docs/agent.md`). Every cycle it observes the pool, prices, open liabilities and demand, cross-checks the ArcStocks oracle against CoinMarketCap and relays confirmed prices to the testnet market. A Gemini planner then decides with tool calls (`restock`, `reprice` at a payout target it picks, `escalate`, `no_action`) and gives its reasons; code checks every proposal against the same rules the contract enforces before sending. If no model answers, a deterministic policy takes over. Restocks above the soft threshold wait for a human. Each cycle is appended to a hash-chained log (`agent/log/decisions.jsonl`) and its head is anchored on-chain with `anchor`.
 
 ```sh
 cd agent
 npm install
-# .env: PRIVATE_KEY=0x… (the operator key), CMC_API_KEY=… (without it nothing is confirmed and no money moves)
+# .env: PRIVATE_KEY=0x… (the operator key), CMC_API_KEY=… (without it nothing is confirmed and no money moves),
+#       GEMINI_API_KEY=…, optional RPC_URL=… (e.g. `arc-canteen rpc-url`), PLANNER_MODELS=gemini-3.8-flash,…
 npm start            # every 15 min (CYCLE_MINUTES); `npm run once` for a single cycle
 npm run approve      # list escalations; `npm run approve 3` / `npm run approve 3 reject`
 ```
