@@ -6,6 +6,7 @@ import { gsap, reducedMotion, useGSAP } from '../motion'
 import SplitReveal from '../components/SplitReveal'
 import Magnetic from '../components/Magnetic'
 import Mark from '../components/Mark'
+import Link from '../components/Link'
 
 const MARK = 'Pandock'
 const explorer = chain.blockExplorers.default.url
@@ -50,7 +51,7 @@ export default function Footer() {
         </SplitReveal>
         <div data-rise>
           <Magnetic>
-            <a href="#top" className="btn-primary btn-large">Send them a box</a>
+            <Link to="/app/gift" className="btn-primary btn-large">Send them a box</Link>
           </Magnetic>
         </div>
       </section>
