@@ -5,6 +5,7 @@ import { usePath } from '../router'
 import Link from '../components/Link'
 import Mark from '../components/Mark'
 import Box from '../components/Box'
+import PageHeader from './PageHeader'
 import { useBoxes } from './useBoxes'
 import BuyPage from './BuyPage'
 import BoxesPage from './BoxesPage'
@@ -37,35 +38,48 @@ export default function AppShell() {
 
   return (
     <div className="app">
-      <header className="app-bar">
-        <Link to="/" className="brand">
-          <Mark className="brand-mark" />
-          Pandock
-          {chain.testnet && <span className="nav-badge">Testnet</span>}
-        </Link>
-        <nav className="app-tabs" aria-label="App">
-          {TABS.map((t) => (
-            <Link key={t.to} to={t.to} className={`app-tab ${path === t.to ? 'is-active' : ''}`} aria-current={path === t.to ? 'page' : undefined}>
-              {t.label}
-              {t.to === '/app/boxes' && boxes.balance > 0n && <span className="app-tab-count">{boxes.balance.toString()}</span>}
-            </Link>
-          ))}
+      {/* The landing's floating pill, held in its scrolled state. */}
+      <header className="nav-shell app-nav" style={{ '--nav-p': 1 } as React.CSSProperties}>
+        <nav className="nav-bar app-nav-bar" aria-label="App">
+          <Link to="/" className="brand">
+            <Mark className="brand-mark" />
+            Pandock
+            {chain.testnet && <span className="nav-badge">Testnet</span>}
+          </Link>
+          <div className="app-tabs">
+            {TABS.map((t) => (
+              <Link
+                key={t.to}
+                to={t.to}
+                className={`app-tab ${path === t.to ? 'is-active' : ''}`}
+                aria-current={path === t.to ? 'page' : undefined}
+              >
+                {t.label}
+                {t.to === '/app/boxes' && boxes.balance > 0n && <span className="app-tab-count">{boxes.balance.toString()}</span>}
+              </Link>
+            ))}
+          </div>
+          <WalletButton />
         </nav>
-        <WalletButton />
       </header>
 
-      <main className="app-main">
-        {boxes.wrongChain && (
-          <div className="app-banner">
-            <span className="body">Pandock runs on {chain.name}.</span>
-            <button className="btn-primary" disabled={switching} onClick={() => switchChain({ chainId: chain.id })}>
-              {switching ? 'Switching…' : `Switch to ${chain.name}`}
-            </button>
-          </div>
-        )}
-        {!boxes.live && (
-          <div className="app-banner app-banner-quiet">
-            <span className="body">The box contract isn’t deployed on this network yet, so buying and opening are off for now.</span>
+      <main className="app-main" key={path}>
+        {(boxes.wrongChain || !boxes.live) && (
+          <div className="app-status">
+            {boxes.wrongChain ? (
+              <>
+                <span className="status-dot" aria-hidden="true" />
+                <span className="caption">Wrong network. Pandock runs on {chain.name}.</span>
+                <button className="status-action" disabled={switching} onClick={() => switchChain({ chainId: chain.id })}>
+                  {switching ? 'Switching…' : 'Switch'}
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="status-dot status-dot-quiet" aria-hidden="true" />
+                <span className="caption">Preview: the box contract isn’t live on {chain.name} yet.</span>
+              </>
+            )}
           </div>
         )}
 
@@ -74,9 +88,13 @@ export default function AppShell() {
         ) : (
           <section className="app-connect">
             <Box className="app-connect-box" />
-            <h1 className="display-lg">Connect a wallet to get started.</h1>
-            <p className="body muted">Boxes are bought with USDC on {chain.name}. Gas is paid in USDC too.</p>
-            <WalletButton className="btn-primary btn-large" />
+            <PageHeader
+              kicker="Pandock app"
+              title={<>Connect a wallet<br />to get started.</>}
+              lead={<>Boxes are bought with USDC on {chain.name}. Gas is paid in USDC too.</>}
+            >
+              <WalletButton className="btn-primary btn-large" />
+            </PageHeader>
           </section>
         )}
       </main>
