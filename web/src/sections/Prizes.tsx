@@ -2,7 +2,7 @@ import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { formatUnits } from 'viem'
 import { useReadContract } from 'wagmi'
-import { PANDOCK, pandockAbi, STOCKS, stockOf } from '../config'
+import { FEATURED, PANDOCK, pandockAbi, STOCKS, stockOf } from '../config'
 import { fmt } from '../format'
 import { gsap } from '../motion'
 import { usd, usePrices } from '../prices'
@@ -55,7 +55,8 @@ export default function Prizes() {
             ? { symbol: 'Empty', name: 'Nothing this time', empty: true, odds: pct(p.weight, total) }
             : { ...stockOf(p.token), shares: p.amount, odds: pct(p.weight, total) },
         )
-      : Object.values(STOCKS) // before a contract is wired up, show what can be inside
+      : // before a contract is wired up, show what can be inside (the featured eight)
+        Object.values(STOCKS).filter((s) => FEATURED.includes(s.symbol))
   ).slice(0, 8)
   const current = held ?? front
 
@@ -78,7 +79,7 @@ export default function Prizes() {
           <p className="lead muted" data-rise>
             {table?.length
               ? 'Odds from the contract. Prices from the ArcStocks oracle on Arc, live.'
-              : 'Eight US stocks and ETFs, backed one to one. Prices read live from Arc.'}
+              : `${Object.keys(STOCKS).length} US stocks and ETFs, backed one to one. Prices read live from Arc.`}
           </p>
           <ul className="odds" data-rise onMouseLeave={() => setHeld(null)}>
             {rows.map((r, i) => (

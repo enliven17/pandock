@@ -17,6 +17,7 @@ const MAX = 100
 const PREVIEW_PRICE = 0.1 // shown until the contract is live
 const usdc = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const whole = (n: number) => Math.round(n).toString()
+const withLogo = Object.values(STOCKS).filter((s) => hasLogo(s.symbol))
 
 export default function BuyPage({ boxes }: { boxes: Boxes }) {
   const root = useRef<HTMLElement>(null)
@@ -52,13 +53,10 @@ export default function BuyPage({ boxes }: { boxes: Boxes }) {
         <div className="buy-inside">
           <span className="caption muted">Could be inside</span>
           <div className="buy-logos">
-            {Object.values(STOCKS).map((s) =>
-              hasLogo(s.symbol) ? (
-                <Logo key={s.symbol} symbol={s.symbol} className="buy-logo" />
-              ) : (
-                <span key={s.symbol} className="buy-ticker">{s.symbol}</span>
-              ),
-            )}
+            {withLogo.map((s) => (
+              <Logo key={s.symbol} symbol={s.symbol} className="buy-logo" />
+            ))}
+            <span className="buy-ticker">+{Object.keys(STOCKS).length - withLogo.length} more</span>
           </div>
           <a href="/#odds" className="caption buy-odds">See the odds</a>
         </div>
