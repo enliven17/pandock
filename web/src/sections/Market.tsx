@@ -20,16 +20,15 @@ function Ruler({ asset, ours }: { asset: RwaAsset; ours?: number }) {
   const at = (p: number) => `${((p - min) / (max - min)) * 100}%`
 
   return (
-    <div className="ruler" aria-hidden="true">
+    <div className="ruler">
       <div className="ruler-track">
         <span className="ruler-band" style={{ left: at(avg * (1 - TOLERANCE)), right: `calc(100% - ${at(avg * (1 + TOLERANCE))})` }} />
         <span className="ruler-avg" style={{ left: at(avg) }} />
-        {asset.tokens.map((t, i) =>
+        {/* Issuer dots stay unlabeled: their prices cluster within cents, so names would pile up.
+            Who is who is in the table below; hovering a dot names it. */}
+        {asset.tokens.map((t) =>
           t.price ? (
-            // Issuer labels sit above the track on two alternating levels, so neighbours don't collide.
-            <span key={t.symbol} className={`ruler-mark ${i % 2 ? 'is-high' : ''}`} style={{ left: at(t.price) }}>
-              <span className="ruler-mark-label caption">{t.issuer?.replace(/ Assets$/, '') ?? t.symbol}</span>
-            </span>
+            <span key={t.symbol} className="ruler-mark" style={{ left: at(t.price) }} title={`${t.issuer ?? t.symbol} · ${usd(t.price)}`} />
           ) : null,
         )}
         {ours && (
@@ -40,7 +39,10 @@ function Ruler({ asset, ours }: { asset: RwaAsset; ours?: number }) {
       </div>
       <div className="ruler-scale caption">
         <span>{signedPct(-spread)}</span>
-        <span>Market avg · ±{TOLERANCE * 100}% band</span>
+        <span>
+          <span className="ruler-key ruler-key-issuer" aria-hidden="true" /> Issuers ·{' '}
+          <span className="ruler-key ruler-key-avg" aria-hidden="true" /> Market avg · ±{TOLERANCE * 100}% band
+        </span>
         <span>{signedPct(spread)}</span>
       </div>
     </div>
@@ -52,7 +54,6 @@ export default function Market() {
   const { data: rwa, error, isLoading } = useRwa()
   const { data: arc } = usePrices()
   const [symbol, setSymbol] = useState('NVDA')
-  const [raw, setRaw] = useState<string | null>(null)
   const market = bySymbol(rwa)
   const asset = market[symbol]
   const ours = arc?.[symbol]
@@ -70,12 +71,6 @@ export default function Market() {
     },
     { scope: root, dependencies: [symbol, !!asset] },
   )
-
-  const showRaw = async () => {
-    if (raw) return setRaw(null)
-    const res = await fetch('/api/rwa?raw=1')
-    setRaw(JSON.stringify(await res.json(), null, 2))
-  }
 
   return (
     <section id="market" ref={root} className="market">
@@ -174,21 +169,6 @@ export default function Market() {
           )}
         </div>
 
-        {rwa && (
-          <div className="market-proof">
-            <span className="caption muted-dark market-proof-line">
-              <span className="live-dot" aria-hidden="true" />
-              <code>{rwa.endpoint}</code>
-              <span>
-                · {rwa.creditCount} credit · {new Date(rwa.fetchedAt).toLocaleTimeString()}
-              </span>
-            </span>
-            <button className="btn-ghost-dark" onClick={showRaw}>
-              {raw ? 'Hide response' : 'View raw response'}
-            </button>
-            {raw && <pre className="market-raw">{raw}</pre>}
-          </div>
-        )}
       </div>
     </section>
   )
