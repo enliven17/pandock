@@ -73,6 +73,7 @@ export const pandockAbi = parseAbi([
   'function gift(address[] recipients)',
   'function open(uint256 amount) returns (uint256 firstId)',
   'function reveal(uint256 id)',
+  'event Bought(address indexed buyer, uint256 amount)',
   'event Opened(uint256 indexed openingId, address indexed opener, uint64 targetBlock)',
   'event Expired(uint256 indexed openingId, address indexed opener)',
   'event Revealed(uint256 indexed openingId, address indexed opener, address token, uint256 amount)',
