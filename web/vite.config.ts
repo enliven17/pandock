@@ -7,10 +7,10 @@ function api(): Plugin {
   return {
     name: 'pandock-api',
     configureServer(server) {
-      server.middlewares.use('/api/rwa', async (req, res) => {
+      server.middlewares.use('/api/rwa', async (_req, res) => {
         try {
           const mod = (await server.ssrLoadModule('/api/rwa.ts')) as typeof import('./api/rwa.ts')
-          const response = await mod.GET(new Request(`http://localhost${req.originalUrl ?? req.url ?? ''}`))
+          const response = await mod.GET()
           res.statusCode = response.status
           response.headers.forEach((value: string, key: string) => res.setHeader(key, value))
           res.end(await response.text())

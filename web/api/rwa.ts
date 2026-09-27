@@ -3,7 +3,6 @@
 //
 // One call to /v5/real-world-assets/quotes/latest covers all 29 assets (1 credit per 250 assets),
 // and CMC refreshes it every 60s, so responses are cached for 60s at the edge.
-// `?raw=1` returns CMC's untouched response body, which the site shows as evidence of the call.
 
 const CMC = 'https://pro-api.coinmarketcap.com'
 // Must match web/src/config.ts STOCKS (all 29 ArcStocks tokens). Still one credit: quotes/latest
@@ -65,7 +64,7 @@ const json = (body: unknown, status = 200, cache = true) =>
     },
   })
 
-export async function GET(request: Request): Promise<Response> {
+export async function GET(): Promise<Response> {
   const key = process.env.CMC_API_KEY
   if (!key) return json({ error: 'CMC_API_KEY is not configured on the server' }, 503, false)
 
@@ -81,8 +80,6 @@ export async function GET(request: Request): Promise<Response> {
     // Pass CMC's own message through (never the key) so a bad plan or a typo is diagnosable.
     return json({ error: body?.status?.error_message ?? `CoinMarketCap returned ${res.status}` }, 502, false)
   }
-
-  if (new URL(request.url).searchParams.get('raw')) return json(body)
 
   const payload: RwaPayload = {
     endpoint: `GET ${endpoint}`,
