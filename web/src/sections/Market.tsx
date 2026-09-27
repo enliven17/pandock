@@ -81,7 +81,6 @@ export default function Market() {
     <section id="market" ref={root} className="market">
       <div className="market-inner">
         <header className="market-head">
-          <span className="caption muted-dark page-kicker">Market check · live from CoinMarketCap</span>
           <SplitReveal>
             <h2 className="display-xl">Priced against<br />the market.</h2>
           </SplitReveal>
