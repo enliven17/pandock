@@ -89,7 +89,6 @@ export default function AppShell() {
           <section className="app-connect">
             <Box className="app-connect-box" />
             <PageHeader
-              kicker="Pandock app"
               title={<>Connect a wallet<br />to get started.</>}
               lead={<>Boxes are bought with USDC on {chain.name}. Gas is paid in USDC too.</>}
             >

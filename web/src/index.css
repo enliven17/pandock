@@ -206,7 +206,6 @@ ul { list-style: none; }
 .status-action { background: var(--ink); color: #fff; font-size: 13px; padding: 6px 14px; border-radius: 999px; }
 
 .page-head { display: flex; flex-direction: column; gap: 16px; }
-.page-kicker { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; font-size: 12px; }
 .page-lead { max-width: 30ch; }
 .page-head .ctas { justify-content: flex-start; margin-top: 12px; }
 

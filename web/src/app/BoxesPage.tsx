@@ -73,7 +73,7 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
     return (
       <section ref={root} className="app-page boxes-empty">
         <Box className="empty-box" />
-        <PageHeader kicker="My boxes" title="No boxes yet." lead="Buy a few, or ask a friend to gift you one. They show up here sealed.">
+        <PageHeader title="No boxes yet." lead="Buy a few, or ask a friend to gift you one. They show up here sealed.">
           <div className="ctas">
             <Link to="/app" className="btn-primary btn-large">Buy boxes</Link>
           </div>
@@ -83,7 +83,7 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
 
   return (
     <section ref={root} className="app-page">
-      <PageHeader kicker="My boxes" title="Your boxes." lead="Open them all at once, then reveal each one. Reveal within about an hour of opening, or the box is forfeited." />
+      <PageHeader title="Your boxes." lead="Open them all at once, then reveal each one. Reveal within about an hour of opening, or the box is forfeited." />
 
       <div className="boxes-grid">
         <div className="sealed-tile">

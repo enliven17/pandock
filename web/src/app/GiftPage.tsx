@@ -70,7 +70,6 @@ export default function GiftPage({ boxes }: { boxes: Boxes }) {
   return (
     <section ref={root} className="app-page">
       <PageHeader
-        kicker="Gift"
         title={<>Nobody knows<br />what’s inside.</>}
         lead="Send one sealed box to each address, all in one transaction. They open it themselves."
       />

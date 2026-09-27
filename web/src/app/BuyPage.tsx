@@ -65,7 +65,7 @@ export default function BuyPage({ boxes }: { boxes: Boxes }) {
       </div>
 
       <div className="buy-panel">
-        <PageHeader kicker="Buy" title="Buy boxes." lead="A random slice of a real stock in each one. Keep them, open them, or gift them sealed." />
+        <PageHeader title="Buy boxes." lead="A random slice of a real stock in each one. Keep them, open them, or gift them sealed." />
 
         <div className="qty-display" aria-live="polite">
           <RollingNumber value={qty} format={whole} className="qty-number" />
