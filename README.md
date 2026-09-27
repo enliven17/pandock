@@ -19,6 +19,20 @@ Roles: the **owner** sets the rules (`setPolicy`: price source, 70–80% payout 
 
 Randomness: commit-reveal on the hash of the block after `open`, read through `blockhash` or the EIP-2935 history contract (about 69 minutes of blocks on Arc). A reveal past that window forfeits the box instead of re-rolling, so an opener can't sit on a bad draw and retry it. Arc's `PREVRANDAO` is always 0 and there is no VRF on Arc yet.
 
+## Treasurer agent (`agent/`, Node + viem)
+
+Runs the pool as the contract's operator (design: `docs/agent.md`). Every cycle it observes the pool, prices and open liabilities, cross-checks the ArcStocks oracle against CoinMarketCap, then relays prices to the testnet market, reprices drifted tiers and restocks low pools from surplus sale proceeds. Restocks above the soft threshold wait for a human. Each cycle is appended to a hash-chained log (`agent/log/decisions.jsonl`) and its head is anchored on-chain with `anchor`.
+
+```sh
+cd agent
+npm install
+# .env: PRIVATE_KEY=0x… (the operator key), CMC_API_KEY=… (without it nothing is confirmed and no money moves)
+npm start            # every 15 min (CYCLE_MINUTES); `npm run once` for a single cycle
+npm run approve      # list escalations; `npm run approve 3` / `npm run approve 3 reject`
+```
+
+Knobs (env): `CROSS_CHECK_BPS` 200, `RELAY_BPS` 50, `REPRICE_DRIFT_BPS` 300, `POOL_LOW_USD` 60, `POOL_TARGET_USD` 100, `RESERVE_USD` 0.5, `SOFT_RESTOCK_USD` 5.
+
 ## Web (`web/`, Vite + React + wagmi + ConnectKit)
 
 ```sh
