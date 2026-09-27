@@ -5,10 +5,17 @@ import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+/// USD price of a stock token, 6 decimals. MockMarket on testnet; an ArcStocks oracle adapter on mainnet.
+interface IPriceSource {
+    function priceOf(address token) external view returns (uint256);
+}
 
 /// @title Pandock — sealed stock boxes on Arc
 /// @notice Buy sealed boxes with native USDC, gift them, open them for a random slice of a
 ///         tokenized stock (ArcStocks STOCK.arc ERC-20s) held by this contract.
+///         The owner (a human) sets the rules; the operator (the Treasurer agent) runs the pool inside them.
 contract Pandock is ERC1155, Ownable {
     using SafeERC20 for IERC20;
 
@@ -35,12 +42,29 @@ contract Pandock is ERC1155, Ownable {
     mapping(uint256 => Opening) public openings;
     uint256 public nextOpeningId;
 
+    // ---- Treasurer policy, owner-set, operator-bound
+    address public operator;
+    IPriceSource public priceSource;
+    /// Expected payout of an operator-set table, in bps of boxPrice.
+    uint16 public payoutMinBps = 7000;
+    uint16 public payoutMaxBps = 8000;
+    mapping(address => bool) public sinks;
+    /// Native USDC the operator may send to sinks per UTC day.
+    uint256 public dailyCap;
+    uint256 public spentDay;
+    uint256 public spentToday;
+
     event Bought(address indexed buyer, uint256 amount);
     event Opened(uint256 indexed openingId, address indexed opener, uint64 targetBlock);
     event Expired(uint256 indexed openingId, address indexed opener);
     event Revealed(uint256 indexed openingId, address indexed opener, address token, uint256 amount);
     event Refunded(uint256 indexed openingId, address indexed opener, uint256 amount);
     event PrizesSet(uint256 count, uint256 totalWeight);
+    event OperatorSet(address operator);
+    event PolicySet(address priceSource, uint16 payoutMinBps, uint16 payoutMaxBps, uint256 dailyCap);
+    event SinkSet(address sink, bool allowed);
+    event Spent(address indexed sink, uint256 amount, bytes data);
+    event Logged(bytes32 head);
 
     error WrongPayment();
     error ZeroAmount();
@@ -48,6 +72,11 @@ contract Pandock is ERC1155, Ownable {
     error TooEarly();
     error NoPrizes();
     error TransferFailed();
+    error NotOperator();
+    error PayoutOutOfBand(uint256 payoutBps);
+    error NotSink();
+    error OverDailyCap();
+    error BadBand();
 
     constructor(uint256 boxPrice_, string memory uri_) ERC1155(uri_) Ownable(msg.sender) {
         boxPrice = boxPrice_;
@@ -119,10 +148,78 @@ contract Pandock is ERC1155, Ownable {
         return _prizes;
     }
 
+    /// @notice Expected payout of a table in bps of boxPrice, priced by `priceSource`.
+    function payoutBps(Prize[] calldata table) public view returns (uint256) {
+        uint256 w;
+        uint256 value; // sum of weight * prize value, USD 18 dp (same units as boxPrice)
+        for (uint256 i; i < table.length; ++i) {
+            Prize calldata p = table[i];
+            w += p.weight;
+            if (p.token == address(0)) continue;
+            uint256 usd18 = p.amount * priceSource.priceOf(p.token) * 1e12 / 10 ** IERC20Metadata(p.token).decimals();
+            value += usd18 * p.weight;
+        }
+        if (w == 0) revert NoPrizes();
+        return value * 10_000 / w / boxPrice;
+    }
+
+    // ---------------------------------------------------------------- operator
+
+    modifier onlyOperator() {
+        if (msg.sender != operator) revert NotOperator();
+        _;
+    }
+
+    /// @notice The Treasurer reprices the table; it only lands if its expected payout is inside the owner's band.
+    function operatorSetPrizes(Prize[] calldata table) external onlyOperator {
+        uint256 bps = payoutBps(table);
+        if (bps < payoutMinBps || bps > payoutMaxBps) revert PayoutOutOfBand(bps);
+        _setPrizes(table);
+    }
+
+    /// @notice Send sale proceeds to an allow-listed sink (the stock market, the USYC Teller), capped per day.
+    ///         Whatever the sink returns (stock tokens, refunds) comes back to this contract.
+    function spend(address sink, uint256 amount, bytes calldata data) external onlyOperator returns (bytes memory) {
+        if (!sinks[sink]) revert NotSink();
+        uint256 day = block.timestamp / 1 days;
+        if (day != spentDay) (spentDay, spentToday) = (day, 0);
+        if (spentToday + amount > dailyCap) revert OverDailyCap();
+        spentToday += amount;
+        (bool ok, bytes memory ret) = sink.call{value: amount}(data);
+        if (!ok) revert TransferFailed();
+        emit Spent(sink, amount, data);
+        return ret;
+    }
+
+    /// @notice Anchors the head of the Treasurer's hash-chained decision log.
+    function anchor(bytes32 head) external onlyOperator {
+        emit Logged(head);
+    }
+
     // ---------------------------------------------------------------- owner
 
-    /// @notice The keeper resets the table on each hourly refill, computing amounts from live prices.
+    /// @notice Owner override, no band check (the owner sets the band).
     function setPrizes(Prize[] calldata table) external onlyOwner {
+        _setPrizes(table);
+    }
+
+    function setOperator(address op) external onlyOwner {
+        operator = op;
+        emit OperatorSet(op);
+    }
+
+    function setPolicy(IPriceSource source, uint16 minBps, uint16 maxBps, uint256 cap) external onlyOwner {
+        if (minBps > maxBps) revert BadBand();
+        (priceSource, payoutMinBps, payoutMaxBps, dailyCap) = (source, minBps, maxBps, cap);
+        emit PolicySet(address(source), minBps, maxBps, cap);
+    }
+
+    function setSink(address sink, bool allowed) external onlyOwner {
+        sinks[sink] = allowed;
+        emit SinkSet(sink, allowed);
+    }
+
+    function _setPrizes(Prize[] calldata table) internal {
         delete _prizes;
         uint256 w;
         for (uint256 i; i < table.length; ++i) {
