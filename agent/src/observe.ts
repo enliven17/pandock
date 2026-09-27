@@ -4,6 +4,7 @@ export type Prize = { token: `0x${string}`; weight: bigint; amount: bigint }
 export type StockState = { token: `0x${string}`; pool: bigint; oracle: bigint; market: bigint }
 export type State = Awaited<ReturnType<typeof observe>>
 
+const DAY_BLOCKS = 170_000n // Arc Testnet makes a block about every 0.5s
 const SCAN = 1000n // ponytail: liabilities scan the last 1000 openings; index events if boxes outgrow that
 
 /** One read of everything the Treasurer decides on. Prices are USD with 6 decimals, amounts 18. */
@@ -47,6 +48,18 @@ export async function observe() {
     : []
   const pending = ids.filter((_, i) => openings[i][0] !== '0x0000000000000000000000000000000000000000')
 
+  // Demand over the last 24h and the last hour: what the planner sizes restocks and payout on.
+  const since = block.number > DAY_BLOCKS ? block.number - DAY_BLOCKS : 0n
+  const [bought, opened] = await Promise.all(
+    (['Bought', 'Opened'] as const).map((eventName) =>
+      client.getContractEvents({ ...p, eventName, fromBlock: since, toBlock: block.number }).catch(() => []),
+    ),
+  )
+  const hour = block.number - DAY_BLOCKS / 24n
+  const sum = (logs: typeof bought, from: bigint) =>
+    logs.filter((l) => l.blockNumber >= from).reduce((n, l) => n + ('amount' in l.args ? Number(l.args.amount) : 1), 0)
+  const demand = { sold24h: sum(bought, since), sold1h: sum(bought, hour), opened24h: sum(opened, since), opened1h: sum(opened, hour) }
+
   const stocks: Record<string, StockState> = Object.fromEntries(
     symbols.map((s, i) => [
       s,
@@ -66,6 +79,7 @@ export async function observe() {
     boxPrice,
     table: table as readonly Prize[],
     pending,
+    demand,
     band: { min: Number(minBps), max: Number(maxBps) },
     cap,
     spentToday: spentDay === today ? spentToday : 0n,

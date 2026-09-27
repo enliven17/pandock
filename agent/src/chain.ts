@@ -67,4 +67,6 @@ export const pandockAbi = parseAbi([
   'function operatorSetPrizes(Prize[] table)',
   'function spend(address sink, uint256 amount, bytes data) returns (bytes)',
   'function anchor(bytes32 head)',
+  'event Bought(address indexed buyer, uint256 amount)',
+  'event Opened(uint256 indexed openingId, address indexed opener, uint64 targetBlock)',
 ])
