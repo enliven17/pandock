@@ -44,15 +44,15 @@ This is the "continuous audit" from the Tameion prior-art section: a reviewer re
 ## Architecture
 
 ```
-            ┌───────────── agent/ (Node, TypeScript) ─────────────┐
- Arc RPC ──▶│ observe ──▶ decide (Gemini, function calling) ─▶ act ─▶ log │──▶ Pandock (setPrizes, sinks)
- ArcStocks  │   balances,   proposes actions as tool     Circle    │──▶ Market (buy stock)
- oracle ───▶│   prices,     calls; deterministic checks  agent     │──▶ USYC Teller
- events ───▶│   liabilities run before anything is sent  wallet    │──▶ Logged(head) anchor
- CMC API ──▶│   second price opinion                              │
-            └──────────────────────────┬───────────────────────────┘
-                                       ▼
-               web/ Treasurer page · approval queue · Telegram bot
+              ┌─────── agent/ (Node, TypeScript) ────────┐
+Arc RPC   ──▶ │ observe    balances, liabilities, events │ ──▶ Pandock  (setPrizes, sinks)
+ArcStocks ──▶ │ decide     Gemini, function calling      │ ──▶ Market   (buy stock)
+CMC API   ──▶ │ check      rules + second price opinion  │ ──▶ USYC Teller
+events    ──▶ │ act        Circle agent wallet           │ ──▶ Logged(head) anchor
+              │ log        hash-chained decision record  │
+              └─────────────────────┬────────────────────┘
+                                    ▼
+              web/ Treasurer page · approval queue · Telegram bot
 ```
 
 - **Decide**: Gemini with function calling over a small tool set (`restock`, `set_prize_table`, `move_to_reserve`, `redeem_reserve`, `escalate`, `no_action`). The model proposes; code checks every proposal against the same rules the contract enforces *before* sending, so a bad proposal is caught and logged rather than reverted on-chain.
