@@ -8,6 +8,7 @@ import Logo from '../components/Logo'
 import { hasLogo } from '../components/logos'
 
 const TICKERS = Object.values(STOCKS)
+const TOP = 3 // issuers listed before the rest fold into one row
 
 /** A price ruler: every issuer's price, the market average and ours on one scale, with the tolerance band. */
 function Ruler({ asset, ours }: { asset: RwaAsset; ours?: number }) {
@@ -54,12 +55,18 @@ export default function Market() {
   const { data: rwa, error, isLoading } = useRwa()
   const { data: arc } = usePrices()
   const [symbol, setSymbol] = useState('NVDA')
+  const [allIssuers, setAllIssuers] = useState(false)
   const market = bySymbol(rwa)
   const asset = market[symbol]
   const ours = arc?.[symbol]
   const g = gap(ours, asset?.price)
   const off = g !== undefined && Math.abs(g) > TOLERANCE
   const totalCap = (asset?.tokens ?? []).reduce((s, t) => s + (t.marketCap ?? 0), 0) || 1
+  // Biggest issuers first; the long tail folds away (the ruler still plots every one).
+  const ranked = [...(asset?.tokens ?? [])].sort((a, b) => (b.marketCap ?? 0) - (a.marketCap ?? 0))
+  const shown = allIssuers ? ranked : ranked.slice(0, TOP)
+  const rest = ranked.slice(TOP)
+  const restShare = rest.reduce((s, t) => s + (t.marketCap ?? 0), 0) / totalCap
 
   // On every stock switch: the markers slide in from the average, the figures and rows settle in.
   useGSAP(
@@ -93,7 +100,10 @@ export default function Market() {
                 role="tab"
                 aria-selected={symbol === s.symbol}
                 className={`market-ticker ${symbol === s.symbol ? 'is-active' : ''} ${tg !== undefined && Math.abs(tg) > TOLERANCE ? 'is-off' : ''}`}
-                onClick={() => setSymbol(s.symbol)}
+                onClick={() => {
+                  setSymbol(s.symbol)
+                  setAllIssuers(false)
+                }}
               >
                 {hasLogo(s.symbol) && <Logo symbol={s.symbol} className="market-ticker-logo" />}
                 {s.symbol}
@@ -149,7 +159,7 @@ export default function Market() {
                   <span>Price</span>
                   <span className="issuer-share-col">Share of tokenized supply</span>
                 </div>
-                {asset.tokens.map((t) => (
+                {shown.map((t) => (
                   <div key={t.symbol} className="issuer-row">
                     <span className="issuer-name">
                       <span className="body-strong">{t.issuer ?? 'Unknown issuer'}</span>
@@ -164,6 +174,18 @@ export default function Market() {
                     </span>
                   </div>
                 ))}
+                {rest.length > 0 && (
+                  <button className="issuer-more" aria-expanded={allIssuers} onClick={() => setAllIssuers((v) => !v)}>
+                    <span className="body-strong">
+                      {allIssuers ? 'Show top issuers' : `+${rest.length} more ${rest.length === 1 ? 'issuer' : 'issuers'}`}
+                    </span>
+                    {!allIssuers && (
+                      <span className="caption muted-dark">
+                        {restShare < 0.01 ? 'under 1%' : `${Math.round(restShare * 100)}%`} of tokenized supply
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
             </>
           )}

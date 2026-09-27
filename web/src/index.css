@@ -369,6 +369,8 @@ ul { list-style: none; }
 .share-bar { flex: 1; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
 .share-fill { display: block; height: 100%; border-radius: 99px; background: #fff; transform-origin: left center; }
 .issuer-share .caption { min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+.issuer-more { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; padding: 14px 18px; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.05); color: #fff; text-align: left; transition: background 0.25s; }
+.issuer-more:hover { background: rgba(255, 255, 255, 0.1); }
 
 
 /* Odds */
