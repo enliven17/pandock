@@ -39,6 +39,7 @@ This is the "continuous audit" from the Tameion prior-art section: a reviewer re
 - **Network**: Arc Testnet first (Circle agent wallet, policy limits and USYC are available there); a mainnet mirror on real ArcStocks later if time allows.
 - **Human approvals**: dashboard + Telegram.
 - **Model**: Gemini, spread across several models by role (see *Model routing*).
+- **Second price source**: CoinMarketCap Pro API on our Startup plan (API key, server-side only; see *Price cross-check*).
 
 ## Architecture
 
@@ -48,6 +49,7 @@ This is the "continuous audit" from the Tameion prior-art section: a reviewer re
  ArcStocks  │   balances,   proposes actions as tool     Circle    │──▶ Market (buy stock)
  oracle ───▶│   prices,     calls; deterministic checks  agent     │──▶ USYC Teller
  events ───▶│   liabilities run before anything is sent  wallet    │──▶ Logged(head) anchor
+ CMC API ──▶│   second price opinion                              │
             └──────────────────────────┬───────────────────────────┘
                                        ▼
                web/ Treasurer page · approval queue · Telegram bot
@@ -78,6 +80,18 @@ How the router keeps clear of limits:
 
 Model IDs are from Google's model list as of 2026-09-25; they live in one config file so they can be swapped without touching the agent.
 
+## Price cross-check (CoinMarketCap)
+
+Every price the agent acts on comes from the ArcStocks oracle, and a single source is a single point of failure: one stale or wrong print and a reprice could publish a table that overpays, or a restock could buy at the wrong price. So the agent gets a second opinion from the **CoinMarketCap Pro API** (our Startup plan) before it moves money.
+
+- **What it compares**: the ArcStocks oracle price for each stock against CMC's quote for the same equity. `STOCK.arc` tokens are not listed on CMC, so the comparison uses CMC's tokenized-equity / RWA data for the same underlying (e.g. an xStocks listing); small gaps between tokenized venues are normal.
+- **When it asks**: not every cycle. Before a reprice, before any restock, and whenever the oracle moves more than a set amount between cycles. Quotes are cached for a few minutes so a cycle never spends credits twice.
+- **What it does with the answer**: if the two sources are within a tolerance band (starting point: 2%), the action goes ahead and both prices go in the log. Outside the band, the agent does not act on that stock; it logs both numbers and escalates to a human with the gap. If CMC is unavailable, the agent treats that stock as unconfirmed and skips money-moving actions on it for the cycle.
+- **Where the key lives**: `CMC_API_KEY` in the agent's `.env` (git-ignored). CMC is only ever called from the agent service, never from the browser. If the site later shows CMC data (e.g. 24h change on a card), it reads it from the agent's own endpoint.
+- **Budget**: sized from the plan's real limits, read at startup from `GET /v1/key/info` (credits per day/month, requests per minute), with a daily credit cap in config and a warning in the log as it gets close.
+
+The contract's payout-band check can't read CMC (it needs an on-chain price), so this is a layer on the agent side, in front of the contract rule, not a replacement for it.
+
 ## Circle stack used
 
 | Tool | Where |
@@ -105,6 +119,7 @@ Genuine usage, not a synthetic dataset:
 - USYC on Arc Testnet needs the agent wallet **allowlisted by Circle Support** (≈24h). File the ticket as soon as the wallet exists.
 - Circle agent wallets list Arc Testnet but not Arc mainnet; a mainnet mirror would run from a plain key with the contract policy as the only hard limit.
 - The project's actual per-model RPM/RPD (AI Studio → Rate limit) to size the buckets.
+- CMC Startup plan limits (from `/v1/key/info`) and which CMC endpoint gives the cleanest per-ticker tokenized-equity quote.
 
 ## Timeline (Tameion: Sep 27 – Oct 10)
 
