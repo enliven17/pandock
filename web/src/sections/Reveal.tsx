@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { gsap, reducedMotion, useGSAP } from '../motion'
-import { MARK_H, MARK_PATH, MARK_W } from '../components/Mark'
+import Box from '../components/Box'
 import Logo from '../components/Logo'
 
 const TICKERS = ['QQQ', 'TSLA', 'NVDA', 'META', 'GOOGL', 'AAPL', 'AMZN', 'SPY']
@@ -12,38 +12,6 @@ const FAN: [number, number][] = [
 ]
 const NAV_SAFE = 120 // keep the burst below the floating nav
 const SENTENCE = 'Every slice is a real share.'
-
-// The lid's top face is an isometric square: logo x runs along (130,-65), y along (130,65).
-// Scale the mark to 55% of the face and centre it on (160,90).
-const LID_MARK = (() => {
-  const k = (130 / MARK_W) * 0.55
-  const [a, b, c, d] = [k, -k / 2, k, k / 2]
-  const [cx, cy] = [MARK_W / 2, MARK_H / 2]
-  return `matrix(${a} ${b} ${c} ${d} ${160 - (a * cx + c * cy)} ${90 - (b * cx + d * cy)})`
-})()
-
-/** Clean isometric box: three flat tones per part, no ribbon, no outlines.
- *  Each face gets a same-colour hairline stroke so anti-aliasing never opens a seam between faces. */
-function Box() {
-  const face = (points: string, fill: string) => (
-    <polygon points={points} fill={fill} stroke={fill} strokeWidth="0.8" strokeLinejoin="round" />
-  )
-  return (
-    <svg className="box" viewBox="0 0 320 300" aria-hidden="true">
-      {face('160,40 290,105 160,170 30,105', '#0b0b0c')}
-      <g className="box-body">
-        {face('30,105 160,170 160,280 30,215', '#1d1d1f')}
-        {face('290,105 160,170 160,280 290,215', '#2c2c2e')}
-      </g>
-      <g className="box-lid">
-        {face('30,90 160,155 160,170 30,105', '#27272a')}
-        {face('290,90 160,155 160,170 290,105', '#38383b')}
-        {face('160,25 290,90 160,155 30,90', '#48484b')}
-        <path d={MARK_PATH} fill="#5e5e62" transform={LID_MARK} />
-      </g>
-    </svg>
-  )
-}
 
 /** Pinned stage: the box arrives centred, the lid comes off, the tickers burst out,
  *  and the dark grows out of the box mouth into the next section. */
