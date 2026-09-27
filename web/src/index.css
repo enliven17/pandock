@@ -343,17 +343,19 @@ ul { list-style: none; }
 .figure-big.is-off { color: #ff9f0a; }
 
 /* The ruler */
-.ruler { padding: 56px 0 0; }
+.ruler { padding: 16px 0 0; }
 .ruler-track { position: relative; height: 56px; }
 .ruler-track::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
 .ruler-band { position: absolute; top: 50%; height: 36px; transform: translateY(-50%); background: rgba(255, 255, 255, 0.07); border-radius: 12px; }
 .ruler-avg { position: absolute; top: 50%; width: 2px; height: 36px; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.45); }
 .ruler-mark { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); background: #8e8e93; box-shadow: 0 0 0 3px #2f2f32; }
-.ruler-mark-label { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--body-muted); }
-.ruler-mark.is-high .ruler-mark-label { bottom: calc(100% + 30px); }
 .ruler-ours { position: absolute; top: 50%; width: 22px; height: 22px; border-radius: 50%; transform: translate(-50%, -50%); background: #fff; box-shadow: 0 0 0 4px #2f2f32, 0 0 0 6px rgba(255, 255, 255, 0.3); z-index: 2; }
 .ruler-ours.is-off { background: #ff9f0a; box-shadow: 0 0 0 4px #2f2f32, 0 0 0 6px rgba(255, 159, 10, 0.4); }
 .ruler-ours-label { position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 600; color: #fff; }
+.ruler-mark:hover { background: #fff; }
+.ruler-key { display: inline-block; vertical-align: middle; margin: 0 2px 2px; }
+.ruler-key-issuer { width: 8px; height: 8px; border-radius: 50%; background: #8e8e93; }
+.ruler-key-avg { width: 2px; height: 10px; background: rgba(255, 255, 255, 0.45); }
 .ruler-scale { display: flex; justify-content: space-between; margin-top: 34px; color: rgba(255, 255, 255, 0.4); font-variant-numeric: tabular-nums; }
 
 /* Issuers */
@@ -368,15 +370,6 @@ ul { list-style: none; }
 .share-fill { display: block; height: 100%; border-radius: 99px; background: #fff; transform-origin: left center; }
 .issuer-share .caption { min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Proof of the call */
-.market-proof { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
-.market-proof-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
-.market-proof code { font-size: 12px; color: #fff; word-break: break-all; }
-.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #30d158; box-shadow: 0 0 0 4px rgba(48, 209, 88, 0.18); animation: live 2s ease-in-out infinite; }
-@keyframes live { 50% { box-shadow: 0 0 0 7px rgba(48, 209, 88, 0.05); } }
-.btn-ghost-dark { color: #fff; background: rgba(255, 255, 255, 0.1); font-size: 14px; padding: 8px 16px; border-radius: 999px; }
-.btn-ghost-dark:hover { background: rgba(255, 255, 255, 0.18); }
-.market-raw { flex-basis: 100%; max-height: 360px; overflow: auto; background: #000; color: #d2d2d7; border-radius: var(--r-md); padding: 20px; font-size: 12px; line-height: 1.5; }
 
 /* Odds */
 .odds-section { padding: 140px 24px; max-width: 1140px; margin: 0 auto; }
@@ -430,6 +423,9 @@ ul { list-style: none; }
   .market-figure:first-child { grid-column: 1 / -1; }
   .issuer-row { grid-template-columns: minmax(0, 1fr) auto; }
   .issuer-share-col { display: none; }
+  /* Narrow screens: the legend gets its own row under the -x% / +x% ends. */
+  .ruler-scale { flex-wrap: wrap; row-gap: 10px; }
+  .ruler-scale > span:nth-child(2) { order: 3; flex-basis: 100%; text-align: center; }
   .stats { grid-template-columns: 1fr; }
   .tier { grid-template-columns: 84px 1fr 72px 44px; gap: 12px; padding: 12px 12px; }
   .tier-stock .caption { display: none; }
