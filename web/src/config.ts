@@ -1,6 +1,7 @@
 import { defineChain, parseAbi } from 'viem'
 import { createConfig, http } from 'wagmi'
 import { getDefaultConfig } from 'connectkit'
+import testnet from './deployments/arc-testnet.json'
 
 const usdc = { name: 'USDC', symbol: 'USDC', decimals: 18 } as const
 
@@ -23,7 +24,11 @@ export const arcMainnet = defineChain({
 })
 
 export const chain = import.meta.env.VITE_CHAIN === 'mainnet' ? arcMainnet : arcTestnet
-export const PANDOCK = import.meta.env.VITE_PANDOCK_ADDRESS as `0x${string}` | undefined
+const onTestnet = chain.id === arcTestnet.id
+// Testnet falls back to the last `forge script … Deploy` run, which writes deployments/arc-testnet.json.
+export const PANDOCK = (import.meta.env.VITE_PANDOCK_ADDRESS ?? (onTestnet ? testnet.pandock : undefined)) as
+  | `0x${string}`
+  | undefined
 
 // ConnectKit (Family) wires up injected wallets, Coinbase Wallet and, with a project id, WalletConnect.
 export const wagmiConfig = createConfig(
@@ -45,7 +50,7 @@ export const wagmiConfig = createConfig(
 // ArcStocks v2 STOCK.arc tokens on Arc mainnet: all 29 verified on-chain (code, `X.arc` symbol,
 // a price from the ArcStocks oracle) and 1:1 against the Robinhood Chain vault.
 // `underlying` is the Robinhood Chain token, which is what the ArcStocks oracle prices.
-// On testnet, add your mock token addresses here.
+// On testnet, the deploy's mock tokens resolve to these same entries by symbol (see stockOf).
 type Stock = { symbol: string; name: string; underlying: `0x${string}` }
 export const STOCKS: Record<string, Stock> = {
   '0x0a2dd7160de0c452ed4642d498162550fe2165f2': { symbol: 'NVDA', name: 'NVIDIA', underlying: '0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC' },
@@ -86,8 +91,18 @@ export const FEATURED = ['NVDA', 'TSLA', 'AAPL', 'AMZN', 'META', 'GOOGL', 'SPY',
 export const ARC_ORACLE = '0x77905f095fa62fc472e56f17bdc039dc764c1595' as const
 export const oracleAbi = parseAbi(['function getPrice(address underlying) view returns (uint256)'])
 
+// Testnet mock NVDA.arc etc. → the mainnet stock's name, logo and oracle price.
+const MOCKS: Record<string, Stock> = onTestnet
+  ? Object.fromEntries(
+      Object.entries(testnet.stocks).flatMap(([sym, addr]) => {
+        const s = Object.values(STOCKS).find((x) => `${x.symbol}.arc` === sym)
+        return s ? [[addr.toLowerCase(), s]] : []
+      }),
+    )
+  : {}
+
 export const stockOf = (addr: string) =>
-  STOCKS[addr.toLowerCase()] ?? { symbol: `${addr.slice(0, 6)}…`, name: 'Stock token', underlying: undefined }
+  MOCKS[addr.toLowerCase()] ?? STOCKS[addr.toLowerCase()] ?? { symbol: `${addr.slice(0, 6)}…`, name: 'Stock token', underlying: undefined }
 
 export const pandockAbi = parseAbi([
   'function boxPrice() view returns (uint256)',
