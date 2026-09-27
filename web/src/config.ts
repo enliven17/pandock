@@ -42,7 +42,8 @@ export const wagmiConfig = createConfig(
   }),
 )
 
-// ArcStocks v2 STOCK.arc tokens on Arc mainnet (verified 1:1 against the Robinhood Chain vault).
+// ArcStocks v2 STOCK.arc tokens on Arc mainnet: all 29 verified on-chain (code, `X.arc` symbol,
+// a price from the ArcStocks oracle) and 1:1 against the Robinhood Chain vault.
 // `underlying` is the Robinhood Chain token, which is what the ArcStocks oracle prices.
 // On testnet, add your mock token addresses here.
 type Stock = { symbol: string; name: string; underlying: `0x${string}` }
@@ -55,7 +56,31 @@ export const STOCKS: Record<string, Stock> = {
   '0x5606e025c05dd41ea485b19490632e09f3ec03b8': { symbol: 'GOOGL', name: 'Alphabet', underlying: '0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3' },
   '0x8645eb2ef4d5a7c46212eb7688547442126c7b48': { symbol: 'SPY', name: 'S&P 500 ETF', underlying: '0x117cc2133c37B721F49dE2A7a74833232B3B4C0C' },
   '0xc2017f980b6b3f1d149541cf692c1971e53383d4': { symbol: 'QQQ', name: 'Nasdaq 100 ETF', underlying: '0xD5f3879160bc7c32ebb4dC785F8a4F505888de68' },
+  '0xe494eeb2268f20b72c954c8458ffc5b3435a9306': { symbol: 'SGOV', name: 'iShares 0-3 Month Treasury Bond', underlying: '0x92FD66527192E3e61d4DDd13322Aa222DE86F9B5' },
+  '0xe41bfe646d15b2fc6f1d37523fd61bbd384f6c0c': { symbol: 'CRCL', name: 'Circle', underlying: '0xdF0992E440dD0be65BD8439b609d6D4366bf1CB5' },
+  '0xc7d2fc9a7a632f587acd933c3fe0b6801a601fd9': { symbol: 'USO', name: 'United States Oil Fund', underlying: '0xa30FA36Db767ad9eD3f7a60fC79526fB4d56D344' },
+  '0x6298af875f6651a75363cac485cbc3c81b9b32cd': { symbol: 'SPCX', name: 'SpaceX', underlying: '0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa' },
+  '0xcb4eaa3036ec99ac895d58efaac8b732d978ca0f': { symbol: 'GLD', name: 'SPDR Gold Trust', underlying: '0xC9a981FEE1F9DEc688bb123ccDeCc63D0deBFC4e' },
+  '0xbb765782c17f57e98eab5be3e901b8971cbe95fe': { symbol: 'GME', name: 'GameStop', underlying: '0x1b0E319c6A659F002271B69dB8A7df2F911c153E' },
+  '0x799ef1973844507bb5b2d8beb66414d333814579': { symbol: 'MU', name: 'Micron Technology', underlying: '0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD' },
+  '0xce1107f2145d3df9122a51652f4011f1f7d224d1': { symbol: 'RDDT', name: 'Reddit', underlying: '0x05b37Fb53A299a1b874A619e1c4C404D52C36F4C' },
+  '0xaee27e9861607746884bcc4df5c88a143bd64452': { symbol: 'HIMS', name: 'Hims & Hers', underlying: '0xCceE82fE024c36fA15E1005edE3E9e4787e23D09' },
+  '0x09aab64aa7b69a699432abdf21b9569385643061': { symbol: 'MSTR', name: 'Strategy', underlying: '0xec262a75e413fAfD0dF80480274532C79D42da09' },
+  '0x26196874b7a087c20970e00699881c6cb0ce9b4c': { symbol: 'MSFT', name: 'Microsoft', underlying: '0xe93237C50D904957Cf27E7B1133b510C669c2e74' },
+  '0x0eeb5cdd376df1ac97fbb99945a2f125a1a7d346': { symbol: 'AMC', name: 'AMC Entertainment', underlying: '0x05a3d1Cd21d0C88145E82600E62e7E496e0F222B' },
+  '0xe027e24611618b069407722bdef2d90f1aab6a6e': { symbol: 'COST', name: 'Costco', underlying: '0x4EA005168D7F09a7A0Ba9D1DEf21a479950E44C2' },
+  '0x66f47619206278952bb40e1abcf0720924271710': { symbol: 'LLY', name: 'Eli Lilly', underlying: '0x8005d266423c7ea827372c9c864491e5786600ea' },
+  '0xdf301e00c6d8fd441b9f4b20d96fd756b9b7f58d': { symbol: 'INTC', name: 'Intel', underlying: '0xc72b96e0E48ecd4DC75E1e45396e26300BC39681' },
+  '0x2d1c40b034cd447aa2389a9744bbea04b57086c4': { symbol: 'DJT', name: 'Trump Media', underlying: '0x1D11f0496982706C5e14A514D4E79F2e6BdE4516' },
+  '0x7b3e4dcd419371df290a8f8c95171907dc02371c': { symbol: 'DELL', name: 'Dell', underlying: '0x941AE714EC6D8130c7B75d67160Ca08f1e7d11Dd' },
+  '0x9d8f5b832c1ca2feb396fbc25a8ccdf58307d936': { symbol: 'AMD', name: 'AMD', underlying: '0x86923f96303D656E4aa86D9d42D1e57ad2023fdC' },
+  '0x3d1ce86d34d13ba0021c6100c79498087ca03876': { symbol: 'RBLX', name: 'Roblox', underlying: '0xF0C4BF4C582cb3836e98394b1d4e7B7281101bE8' },
+  '0xfe8b1961301c8b479e2e61bde1e28dc9d4ce2f35': { symbol: 'SLV', name: 'iShares Silver Trust', underlying: '0x411eFb0E7f985935DAec3D4C3ebaEa0d0AD7D89f' },
+  '0x5229d11bf8a4f2d6198c948cad4faba6b3e30155': { symbol: 'AVGO', name: 'Broadcom', underlying: '0x156E175DD063a8cE274C50654eF40e0032b3fbcF' },
 }
+
+// The eight the landing page features (prize cards, the box burst). The rest are still in every box table.
+export const FEATURED = ['NVDA', 'TSLA', 'AAPL', 'AMZN', 'META', 'GOOGL', 'SPY', 'QQQ']
 
 /** ArcStocks price oracle on Arc mainnet: getPrice(underlying) → USD, 6 decimals. */
 export const ARC_ORACLE = '0x77905f095fa62fc472e56f17bdc039dc764c1595' as const

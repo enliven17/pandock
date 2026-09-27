@@ -1,13 +1,17 @@
 // GET /api/rwa — tokenized-equity market data for the stocks inside a Pandock box, from the
 // CoinMarketCap Pro API (Real World Assets). Runs server-side only: the CMC key never reaches the browser.
 //
-// One call to /v5/real-world-assets/quotes/latest covers all eight assets (1 credit per 250 assets),
+// One call to /v5/real-world-assets/quotes/latest covers all 29 assets (1 credit per 250 assets),
 // and CMC refreshes it every 60s, so responses are cached for 60s at the edge.
 // `?raw=1` returns CMC's untouched response body, which the site shows as evidence of the call.
 
 const CMC = 'https://pro-api.coinmarketcap.com'
-// Must match web/src/config.ts STOCKS. SPY and QQQ are ETFs on CMC; the rest are stocks.
-export const SYMBOLS = ['NVDA', 'TSLA', 'AAPL', 'AMZN', 'META', 'GOOGL', 'SPY', 'QQQ']
+// Must match web/src/config.ts STOCKS (all 29 ArcStocks tokens). Still one credit: quotes/latest
+// bills 1 per 250 assets. Symbols CMC doesn't track are skipped (skip_invalid).
+export const SYMBOLS = [
+  'NVDA', 'TSLA', 'AAPL', 'AMZN', 'META', 'GOOGL', 'SPY', 'QQQ', 'SGOV', 'CRCL', 'USO', 'SPCX', 'GLD', 'GME', 'MU',
+  'RDDT', 'HIMS', 'MSTR', 'MSFT', 'AMC', 'COST', 'LLY', 'INTC', 'DJT', 'DELL', 'AMD', 'RBLX', 'SLV', 'AVGO',
+]
 
 type CmcToken = {
   symbol: string
