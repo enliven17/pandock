@@ -383,7 +383,6 @@ ul { list-style: none; }
 .stat { background: var(--parchment); border-radius: var(--r-lg); padding: 28px; display: flex; flex-direction: column; gap: 6px; }
 .stats-4 { grid-template-columns: repeat(4, 1fr); }
 .stats-4 .stat-value { font-size: clamp(34px, 4.4vw, 64px); }
-.live-section { padding-bottom: 0; }
 .stat-value { font-family: var(--display); font-size: clamp(48px, 6vw, 80px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .tiers { margin-top: 40px; display: flex; flex-direction: column; gap: 4px; }
 .tier { display: grid; grid-template-columns: 110px 190px 1fr 56px; gap: 20px; align-items: center; padding: 14px 18px; border-radius: var(--r-md); font-variant-numeric: tabular-nums; }

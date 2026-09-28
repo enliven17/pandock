@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { chain, stockOf } from '../config'
-import { ScrollTrigger } from '../motion'
+import { gsap, reducedMotion, ScrollTrigger, useGSAP } from '../motion'
 import { usePrices } from '../prices'
 import { useStats } from '../stats'
 import RollingNumber from '../components/RollingNumber'
@@ -14,11 +14,34 @@ export default function Live() {
   const s = useStats()
   const { data: prices } = usePrices()
   const show = !!s && s.sold > 0
+  const root = useRef<HTMLElement>(null)
+  // Numbers sit at zero until the section scrolls into view, then roll up to the live values.
+  const [seen, setSeen] = useState(reducedMotion)
 
   // The pinned sections below were measured without this one; re-measure once it takes up space.
   useEffect(() => {
     if (show) ScrollTrigger.refresh()
   }, [show])
+
+  useGSAP(
+    () => {
+      if (!show || reducedMotion()) return
+      gsap.fromTo(
+        '.live-stat',
+        { y: 56, opacity: 0, scale: 0.96 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 1.1,
+          ease: 'expo.out',
+          stagger: 0.09,
+          scrollTrigger: { trigger: '.stats-4', start: 'top 85%', once: true, onEnter: () => setSeen(true) },
+        },
+      )
+    },
+    { scope: root, dependencies: [show] },
+  )
 
   const paidOut = (s?.paidOut ?? []).reduce((sum, p) => sum + (prices?.[stockOf(p.token).symbol] ?? 0) * p.shares, 0)
   const stats = [
@@ -31,7 +54,7 @@ export default function Live() {
   // Always mounted, only hidden: GSAP wraps the pinned sections below in pin-spacers, so a section
   // React inserted later would have no valid sibling to insert before.
   return (
-    <section id="live" className="odds-section live-section" hidden={!show}>
+    <section id="live" ref={root} className="odds-section live-section" hidden={!show}>
       <div className="odds-head">
         <SplitReveal>
           <h2 className="display-xl">Live on {chain.name}.</h2>
@@ -40,10 +63,10 @@ export default function Live() {
           Every number here is read from the contract, not from us.
         </p>
       </div>
-      <div className="stats stats-4" data-rise>
+      <div className="stats stats-4">
         {stats.map((st) => (
-          <div key={st.label} className="stat">
-            <RollingNumber value={st.value} format={st.format} className="stat-value" />
+          <div key={st.label} className="stat live-stat">
+            <RollingNumber value={seen ? st.value : 0} format={st.format} duration={1.8} className="stat-value" />
             <span className="body muted">{st.label}</span>
           </div>
         ))}

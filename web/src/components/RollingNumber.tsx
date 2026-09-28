@@ -6,10 +6,12 @@ export default function RollingNumber({
   value,
   format = (n) => Math.round(n).toString(),
   className,
+  duration = 0.7,
 }: {
   value: number
   format?: (n: number) => string
   className?: string
+  duration?: number
 }) {
   const ref = useRef<HTMLSpanElement>(null)
   const shown = useRef({ v: value })
@@ -24,7 +26,7 @@ export default function RollingNumber({
     }
     const tween = gsap.to(shown.current, {
       v: value,
-      duration: 0.7,
+      duration,
       ease: 'expo.out',
       onUpdate: () => {
         el.textContent = format(shown.current.v)
@@ -33,7 +35,7 @@ export default function RollingNumber({
     return () => {
       tween.kill()
     }
-  }, [value, format])
+  }, [value, format, duration])
 
   return (
     <span ref={ref} className={className}>
