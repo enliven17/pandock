@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Script, console} from "forge-std/Script.sol";
 import {Pandock, IPriceSource} from "../src/Pandock.sol";
 import {MockMarket} from "../src/MockMarket.sol";
+import {AgentForwarder} from "../src/AgentForwarder.sol";
 
 interface IArcOracle {
     function getPrice(address underlying) external view returns (uint256);
@@ -44,6 +45,7 @@ abstract contract MainnetPrices is Script {
 /// forge script script/Deploy.s.sol --tc Deploy --rpc-url https://rpc.testnet.arc.io --private-key $PK --broadcast
 /// Set MAINNET=1 to deploy Pandock only; fund it with STOCK.arc and call setPolicy / setPrizes separately.
 /// OPERATOR=0x… sets the Treasurer agent's address (defaults to the deployer).
+/// AGENT_WALLET=0x… (a Circle agent wallet) instead deploys an AgentForwarder for it and makes that the operator.
 contract Deploy is MainnetPrices {
     // Prize tiers in USD (6 dp) and weights per stock, out of 1000 draws: 8 × (80 + 12 + 1) = 744 wins, 256 empty.
     // Expected payout 8 × (80×0.05 + 12×0.30 + 1×2.00) / 1000 = $0.0768 on a $0.10 box = 76.8%.
@@ -59,12 +61,17 @@ contract Deploy is MainnetPrices {
 
         vm.startBroadcast();
         address operator = vm.envOr("OPERATOR", msg.sender);
+        address agentWallet = vm.envOr("AGENT_WALLET", address(0));
         Pandock box = new Pandock(0.1 ether, ""); // 0.10 USDC (native, 18 dp)
         console.log("Pandock", address(box));
         if (mainnet) return vm.stopBroadcast();
 
         MockMarket market = new MockMarket();
         console.log("MockMarket", address(market));
+        if (agentWallet != address(0)) {
+            operator = address(new AgentForwarder(agentWallet, address(box), address(market)));
+            console.log("AgentForwarder", operator);
+        }
         (string[8] memory sym,) = stocks();
         address[8] memory tok;
         Pandock.Prize[] memory t = new Pandock.Prize[](25);
@@ -87,12 +94,17 @@ contract Deploy is MainnetPrices {
         vm.stopBroadcast();
 
         console.log("payout bps", box.payoutBps(t));
-        _write(address(box), address(market), operator, sym, tok);
+        _write(address(box), address(market), operator, agentWallet, sym, tok);
     }
 
-    function _write(address box, address market, address operator, string[8] memory sym, address[8] memory tok)
-        internal
-    {
+    function _write(
+        address box,
+        address market,
+        address operator,
+        address agentWallet,
+        string[8] memory sym,
+        address[8] memory tok
+    ) internal {
         string memory s = "stocks";
         string memory stocksJson;
         for (uint256 i; i < 8; ++i) {
@@ -103,6 +115,7 @@ contract Deploy is MainnetPrices {
         vm.serializeAddress(o, "pandock", box);
         vm.serializeAddress(o, "market", market);
         vm.serializeAddress(o, "operator", operator);
+        vm.serializeAddress(o, "agentWallet", agentWallet);
         string memory json = vm.serializeString(o, "stocks", stocksJson);
         vm.writeJson(json, "../web/src/deployments/arc-testnet.json");
     }
