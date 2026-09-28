@@ -4,7 +4,7 @@ import { GoogleGenAI } from '@google/genai'
 // that returns 429 is benched for the retryDelay it gives. See docs/agent.md, "Model routing".
 // ponytail: no pre-emptive RPM/RPD buckets; unchanged state already skips the call. Add them if 429s get frequent.
 export const CHAINS = {
-  planner: (process.env.PLANNER_MODELS ?? 'gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash').split(','),
+  planner: (process.env.PLANNER_MODELS ?? 'gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash').split(','),
 }
 
 const benched = new Map<string, number>()
