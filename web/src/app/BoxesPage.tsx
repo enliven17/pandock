@@ -7,16 +7,30 @@ import Box from '../components/Box'
 import Logo from '../components/Logo'
 import { hasLogo } from '../components/logos'
 import PageHeader from './PageHeader'
+import RevealStage, { type Result } from './RevealStage'
 import type { Boxes } from './AppShell'
+import type { Opening } from './useBoxes'
 
-type Result = { id: bigint; kind: 'win' | 'empty' | 'refund' | 'expired'; symbol?: string; name?: string; amount?: string }
+const KIND = { won: 'win', empty: 'empty', refund: 'refund', expired: 'expired' } as const
+
+/** A stored opening, in the shape the result cards and the stage show. */
+function toResult(o: Opening): Result {
+  const kind = KIND[o.status as keyof typeof KIND]
+  if (kind !== 'win') return { id: BigInt(o.id), kind, amount: o.amount ? fmt(BigInt(o.amount)) : undefined }
+  const s = stockOf(o.token!)
+  return { id: BigInt(o.id), kind, symbol: s.symbol, name: s.name, amount: fmt(BigInt(o.amount!)) }
+}
 
 const STACK = 5 // how many box drawings the sealed tile stacks, at most
 
 export default function BoxesPage({ boxes }: { boxes: Boxes }) {
   const root = useRef<HTMLElement>(null)
-  const [results, setResults] = useState<Result[]>([])
-  const { balance, pending, setPending, busy, error, run, write, live } = boxes
+  const [fresh, setFresh] = useState<Result[]>([])
+  const [stage, setStage] = useState<{ id: bigint; from: DOMRect; result?: Result } | null>(null)
+  const { balance, pending, setPending, revealed, busy, error, run, write, live } = boxes
+  // This session's reveals first, then everything the database remembers (a reload keeps them).
+  const stored = revealed.map(toResult).filter((r) => !fresh.some((f) => f.id === r.id))
+  const results = [...fresh, ...stored]
   const sealed = Number(balance)
   const nothing = sealed === 0 && pending.length === 0 && results.length === 0
 
@@ -49,8 +63,12 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
   }
 
   const reveal = async (id: bigint) => {
-    const logs = await run(`reveal-${id}`, () => write({ address: PANDOCK!, abi: pandockAbi, functionName: 'reveal', args: [id] }))
-    for (const l of logs ?? []) {
+    const box = root.current?.querySelector(`[data-box="${id}"] .waiting-box`)
+    // The stage opens the moment the wallet signs, and waits there for the draw.
+    const onSigned = () => box && setStage({ id, from: box.getBoundingClientRect() })
+    const logs = await run(`reveal-${id}`, () => write({ address: PANDOCK!, abi: pandockAbi, functionName: 'reveal', args: [id] }), onSigned)
+    if (!logs) return setStage(null)
+    for (const l of logs) {
       let r: Result | null = null
       if (l.eventName === 'Revealed') {
         const s = stockOf(l.args.token)
@@ -60,11 +78,9 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
       if (l.eventName === 'Expired') r = { id, kind: 'expired' }
       if (r) {
         const done = r
-        // Lid off the waiting card first, then the result turns over in its place.
-        const lid = root.current?.querySelector(`[data-box="${id}"] .box-lid`)
-        if (lid && !reducedMotion()) await gsap.to(lid, { y: -80, x: 30, rotate: 18, opacity: 0, duration: 0.5, ease: 'power2.out' })
+        setStage((st) => (st ? { ...st, result: done } : st))
         setPending((p) => p.filter((x) => x !== id))
-        setResults((rs) => [done, ...rs])
+        setFresh((rs) => [done, ...rs])
       }
     }
   }
@@ -110,7 +126,11 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
           {pending.length ? (
             <div className="waiting-grid">
               {pending.map((id) => (
-                <div key={id.toString()} className={`waiting-card ${busy === `reveal-${id}` ? 'is-revealing' : ''}`} data-box={id.toString()}>
+                <div
+                  key={id.toString()}
+                  className={`waiting-card ${busy === `reveal-${id}` ? 'is-revealing' : ''} ${stage?.id === id ? 'is-staged' : ''}`}
+                  data-box={id.toString()}
+                >
                   <Box className="waiting-box" />
                   <span className="caption muted">Box {id.toString()}</span>
                   <button className="btn-primary" disabled={!!busy} onClick={() => reveal(id)}>
@@ -154,6 +174,7 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
         </div>
       )}
       {error && <p className="caption error">{error}</p>}
+      {stage && <RevealStage from={stage.from} result={stage.result} onClose={() => setStage(null)} />}
     </section>
   )
 }

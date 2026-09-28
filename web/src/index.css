@@ -270,6 +270,27 @@ ul { list-style: none; }
 .waiting-box { width: 84px; overflow: visible; filter: drop-shadow(var(--product-shadow)); }
 .is-revealing .waiting-box { animation: shake 0.45s ease-in-out infinite; }
 @keyframes shake { 25% { transform: rotate(-5deg) translateX(-2px); } 75% { transform: rotate(5deg) translateX(2px); } }
+/* Reveal stage: full screen, over everything. The box flies in from its card (inline left/top/width from GSAP). */
+.stage { position: fixed; inset: 0; z-index: 100; color: #fff; }
+.stage-backdrop { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 55% at 50% 42%, rgb(72 72 78 / 0.9), rgb(18 18 20 / 0.94) 70%, rgb(0 0 0 / 0.96)); backdrop-filter: blur(8px); }
+.stage-box-wrap { position: fixed; left: 50%; top: 40%; width: 280px; aspect-ratio: 320 / 300; }
+.stage-box { position: relative; width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 30px 60px rgb(0 0 0 / 0.6)); }
+.stage-glow, .stage-burst { position: absolute; left: 50%; top: 45%; width: 120%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none; }
+.stage-glow { background: radial-gradient(circle, rgb(120 180 255 / 0.5), rgb(41 151 255 / 0.18) 40%, transparent 66%); opacity: 0.7; }
+.stage-burst { background: radial-gradient(circle, rgb(255 255 255 / 0.95), rgb(41 151 255 / 0.4) 38%, transparent 66%); opacity: 0; }
+.stage.is-empty .stage-burst, .stage.is-expired .stage-burst { background: radial-gradient(circle, rgb(210 210 215 / 0.6), transparent 60%); }
+.stage-status { position: absolute; left: 0; right: 0; top: calc(42% + min(170px, 31vw) + 28px); text-align: center; font-size: 17px; color: rgb(255 255 255 / 0.7); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.4; } }
+.stage-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; pointer-events: none; }
+.stage-card > * { pointer-events: auto; }
+.stage-prize { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; opacity: 0; }
+.stage-logo { width: clamp(64px, 12vw, 96px); height: clamp(64px, 12vw, 96px); color: #fff; margin-bottom: 8px; filter: drop-shadow(0 0 24px rgb(41 151 255 / 0.6)); }
+.stage-title { font-family: var(--display); font-size: clamp(56px, 11vw, 120px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.stage-detail { font-size: clamp(17px, 2.2vw, 24px); color: rgb(255 255 255 / 0.85); font-variant-numeric: tabular-nums; }
+.stage-name { font-size: 14px; color: rgb(255 255 255 / 0.55); }
+.stage.is-empty .stage-title, .stage.is-expired .stage-title { color: rgb(255 255 255 / 0.8); }
+.stage-actions { opacity: 0; }
+.waiting-card.is-staged .waiting-box { visibility: hidden; }
 .revealed { display: flex; flex-direction: column; gap: 16px; perspective: 1200px; }
 .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
 .reveal-card { background: var(--tile-1); color: #fff; border-radius: var(--r-lg); padding: 24px; min-height: 260px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; transform-style: preserve-3d; }
@@ -419,6 +440,7 @@ ul { list-style: none; }
 .footer-brand-mark { width: 22px; height: auto; }
 
 @media (max-width: 833px) {
+  .nav-bar { display: flex; justify-content: space-between; }
   .nav-links, .nav-end { display: none; }
   .nav-burger { display: flex; }
   .how-grid { grid-template-columns: 1fr; }
@@ -439,7 +461,6 @@ ul { list-style: none; }
   .tier-stock .caption { display: none; }
   .tier-logos { display: none; }
   .swap { margin-top: var(--stack-rise, 140px); transform: translateX(-60px); }
-  .nav-bar { display: flex; justify-content: space-between; }
 }
 @media (max-width: 640px) {
   .odds-row { grid-template-columns: 92px 1fr auto; padding: 12px 14px; }
