@@ -29,7 +29,7 @@ function Ruler({ asset, ours }: { asset: RwaAsset; ours?: number }) {
             Who is who is in the table below; hovering a dot names it. */}
         {asset.tokens.map((t) =>
           t.price ? (
-            <span key={t.symbol} className="ruler-mark" style={{ left: at(t.price) }} title={`${t.issuer ?? t.symbol} · ${usd(t.price)}`} />
+            <span key={`${t.issuer}-${t.symbol}`} className="ruler-mark" style={{ left: at(t.price) }} title={`${t.issuer ?? t.symbol} · ${usd(t.price)}`} />
           ) : null,
         )}
         {ours && (
@@ -160,7 +160,7 @@ export default function Market() {
                   <span className="issuer-share-col">Share of tokenized supply</span>
                 </div>
                 {shown.map((t) => (
-                  <div key={t.symbol} className="issuer-row">
+                  <div key={`${t.issuer}-${t.symbol}`} className="issuer-row">
                     <span className="issuer-name">
                       <span className="body-strong">{t.issuer ?? 'Unknown issuer'}</span>
                       <span className="caption muted-dark">{t.symbol}</span>
