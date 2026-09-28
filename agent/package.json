@@ -2,13 +2,18 @@
   "name": "pandock-treasurer",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
   "scripts": {
-    "start": "tsx --env-file=.env src/index.ts",
-    "once": "tsx --env-file=.env src/index.ts --once",
-    "approve": "tsx --env-file=.env src/approve.ts",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
+    "once": "tsx --env-file-if-exists=.env src/index.ts --once",
+    "approve": "tsx --env-file-if-exists=.env src/approve.ts",
+    "circle-home": "tsx src/pack-circle-home.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@circle-fin/cli": "^1.1.4",
     "@google/genai": "^2.24.0",
     "@neondatabase/serverless": "^1.1.0",
     "viem": "^2.56.9"

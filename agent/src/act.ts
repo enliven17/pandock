@@ -2,6 +2,7 @@ import { execFile, execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { encodeFunctionData, parseAbi } from 'viem'
 import { AGENT_WALLET, CIRCLE, client, FORWARDER, MARKET, marketAbi, PANDOCK, pandockAbi, wallet } from './chain.js'
@@ -10,9 +11,12 @@ import type { Action } from './policy.js'
 const forwarderAbi = parseAbi(['function forward(address target, bytes data) returns (bytes)'])
 const run = promisify(execFile)
 // ponytail: shells out to the Circle CLI (it holds the agent wallet session); move to the W3S API if the CLI gets in the way.
-// Global installs are per Node version (nvm), so this resolves for the Node running the agent.
-const CLI = process.env.CIRCLE_CLI ?? join(execSync('npm root -g').toString().trim(), '@circle-fin', 'cli', 'dist', 'index.js')
-if (CIRCLE && !existsSync(CLI)) throw new Error(`Circle CLI not found for Node ${process.version}: npm i -g @circle-fin/cli (or set CIRCLE_CLI)`)
+// The agent's own copy (a dependency) first; a global install otherwise, which is per Node version under nvm.
+const LOCAL = new URL('../node_modules/@circle-fin/cli/dist/index.js', import.meta.url)
+const CLI =
+  process.env.CIRCLE_CLI ??
+  (existsSync(LOCAL) ? fileURLToPath(LOCAL) : join(execSync('npm root -g').toString().trim(), '@circle-fin', 'cli', 'dist', 'index.js'))
+if (CIRCLE && !existsSync(CLI)) throw new Error(`Circle CLI not found: npm install in agent/ (or set CIRCLE_CLI)`)
 // The CLI matches its stored wallets by lower-case address.
 const FROM = AGENT_WALLET?.toLowerCase() as `0x${string}`
 
