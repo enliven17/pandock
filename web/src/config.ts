@@ -101,6 +101,9 @@ const MOCKS: Record<string, Stock> = onTestnet
     )
   : {}
 
+/** Tokens a box can pay out on this chain: the deploy's mocks on testnet, every STOCK.arc on mainnet. */
+export const prizeTokens = () => (Object.keys(MOCKS).length ? Object.keys(MOCKS) : Object.keys(STOCKS)) as `0x${string}`[]
+
 export const stockOf = (addr: string) =>
   MOCKS[addr.toLowerCase()] ?? STOCKS[addr.toLowerCase()] ?? { symbol: `${addr.slice(0, 6)}…`, name: 'Stock token', underlying: undefined }
 
@@ -118,4 +121,9 @@ export const pandockAbi = parseAbi([
   'event Expired(uint256 indexed openingId, address indexed opener)',
   'event Revealed(uint256 indexed openingId, address indexed opener, address token, uint256 amount)',
   'event Refunded(uint256 indexed openingId, address indexed opener, uint256 amount)',
+  'function boxesSold() view returns (uint256)',
+  'function nextOpeningId() view returns (uint256)',
+  'function refunds() view returns (uint256)',
+  'function anchors() view returns (uint256)',
+  'function paidOut(address token) view returns (uint256)',
 ])
