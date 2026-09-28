@@ -45,9 +45,9 @@ function group(tiers: Tier[]): Tier[] {
   }
   return [...rows.values()].map((r) => (r.symbols.length > 1 ? { ...r, shares: undefined } : r))
 }
-// Cents, plus a third decimal where a tier needs it ($0.025).
+// Cents, plus a third decimal where a small tier needs it ($0.025) but not on a drifted $2.001.
 const prize = (n: number) =>
-  n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 3 })
+  n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: n < 0.1 ? 3 : 2 })
 const shares = (n: number) => n.toLocaleString('en-US', { maximumSignificantDigits: 2 })
 
 export default function Odds() {
