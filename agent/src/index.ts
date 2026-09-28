@@ -2,7 +2,7 @@ import { keccak256, toHex } from 'viem'
 import { account, AGENT_WALLET, CIRCLE, client, FORWARDER, PANDOCK, pandockAbi, STOCKS } from './chain.js'
 import { act, anchor } from './act.js'
 import { cmcPrices } from './cmc.js'
-import { escalate, json, readQueue, record, writeQueue } from './log.js'
+import { decide as settle, escalate, escalations, json, record } from './log.js'
 import { observe, type State } from './observe.js'
 import { brief, decide, type Proposal } from './planner.js'
 import { budget, CFG, confirmed, describe, drift, needsHuman, plan, poolUsd, relay, restock, table, usdc, type Action } from './policy.js'
@@ -11,21 +11,18 @@ const MINUTES = Number(process.env.CYCLE_MINUTES ?? 15)
 let lastHash = ''
 
 type Step = { action: Action; why: string }
-const markDone = (id: number) => writeQueue(readQueue().map((q) => (q.id === id ? { ...q, status: 'done' as const } : q)))
 
 /** Approved escalations, revived from the queue's JSON. Informational ones carry no action. */
-function approved(): { id: number; action?: Action }[] {
-  return readQueue()
-    .filter((e) => e.status === 'approved')
-    .map((e) => {
-      const a = e.action as (Action & { amount?: string }) | null
-      if (!a) return { id: e.id }
-      return { id: e.id, action: a.kind === 'restock' ? { ...a, amount: BigInt(a.amount!) } : a }
-    })
+async function approved(): Promise<{ id: number; action?: Action }[]> {
+  return (await escalations('approved')).map((e) => {
+    const a = e.action as (Action & { amount?: string }) | null
+    if (!a) return { id: e.id }
+    return { id: e.id, action: a.kind === 'restock' ? { ...a, amount: BigInt(a.amount!) } : a }
+  })
 }
 
 /** Turns the model's proposals into actions, rejecting anything the rules (and so the contract) would refuse. */
-function check(s: State, ok: string[], proposals: Proposal[]) {
+async function check(s: State, ok: string[], proposals: Proposal[]) {
   const steps: Step[] = []
   const rejected: { proposal: Proposal; why: string }[] = []
   const notes: { tool: string; reason: string; summary?: string }[] = []
@@ -33,7 +30,7 @@ function check(s: State, ok: string[], proposals: Proposal[]) {
   for (const p of proposals) {
     if (p.tool === 'no_action') notes.push({ tool: p.tool, reason: p.reason })
     else if (p.tool === 'escalate') {
-      escalate(null, p.summary, p.reason)
+      await escalate(null, p.summary, p.reason)
       notes.push({ tool: p.tool, summary: p.summary, reason: p.reason })
     } else if (p.tool === 'restock') {
       const amount = usdc(Number(p.usdc))
@@ -75,9 +72,9 @@ async function cycle() {
   // Relay first and deterministically: the contract's band check prices from the market, so the table needs fresh prices.
   const r = relay(s, ok)
   if (r) await run({ action: r, why: 'oracle moved; copy confirmed prices to the market' })
-  for (const a of approved()) {
+  for (const a of await approved()) {
     if (a.action) await run({ action: a.action, why: `approved by a human (escalation #${a.id})` })
-    markDone(a.id)
+    await settle(a.id, 'approved', 'done')
   }
 
   const currentBps = s.table.length
@@ -100,7 +97,7 @@ async function cycle() {
     unconfirmed,
     table: { current_payout_bps: currentBps, worst_tier_drift_bps: Math.round(drift(s, ok)), drift_tolerance_bps: CFG.driftBps },
     soft_restock_threshold_usdc: CFG.softRestockUsd,
-    pending_escalations: readQueue().filter((e) => e.status === 'pending').map((e) => e.summary),
+    pending_escalations: (await escalations('pending')).map((e) => e.summary),
     baseline_policy_suggests: baseline.map(describe),
   }
 
@@ -113,13 +110,13 @@ async function cycle() {
 
   let decider = 'skipped: state unchanged'
   let proposals: Proposal[] = []
-  let checked: ReturnType<typeof check> = { steps: [], rejected: [], notes: [] }
+  let checked: Awaited<ReturnType<typeof check>> = { steps: [], rejected: [], notes: [] }
   if (changed) {
     const d = await decide(brief(s, facts))
     if (d.model && 'result' in d) {
       decider = d.model
       proposals = d.result
-      checked = check(s, ok, proposals)
+      checked = await check(s, ok, proposals)
     } else {
       // Deterministic floor: no model, no judgement calls; only the rule-based plan (which spends nothing it can't justify).
       decider = `model unavailable (${'errors' in d ? (d.errors ?? []).join('; ') : ''}): deterministic policy`
@@ -130,12 +127,12 @@ async function cycle() {
   const escalated: string[] = []
   for (const step of checked.steps) {
     if (needsHuman(step.action)) {
-      escalate(step.action, describe(step.action), `above the soft restock threshold; agent's reason: ${step.why}`)
+      await escalate(step.action, describe(step.action), `above the soft restock threshold; agent's reason: ${step.why}`)
       escalated.push(describe(step.action))
     } else await run(step)
   }
 
-  const head = record({
+  const head = await record({
     time: new Date(s.time * 1000).toISOString(),
     block: s.block,
     seen: { usdc: Number(s.usdc) / 1e18, pending: s.pending.length, demand: s.demand, spendable: facts.spendable_usdc, pools, table_payout_bps: currentBps },
