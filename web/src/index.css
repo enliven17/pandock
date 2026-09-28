@@ -49,7 +49,8 @@ ul { list-style: none; }
 :root { --nav-p: 0; }
 .nav-shell { position: fixed; inset: 0 0 auto; z-index: 50; padding: calc(var(--nav-p) * 14px) calc(var(--nav-p) * 16px) 0; }
 .nav-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 auto;
+  /* Three columns so the links sit dead centre however wide the brand and the button are. */
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin: 0 auto;
   height: calc(64px - var(--nav-p) * 12px);
   max-width: calc(1320px - var(--nav-p) * 520px);
   padding: 0 calc(28px - var(--nav-p) * 8px);
@@ -67,7 +68,8 @@ ul { list-style: none; }
 .nav-links { display: flex; gap: calc(36px - var(--nav-p) * 12px); font-size: 14px; letter-spacing: -0.224px; }
 .nav-links a { color: inherit; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }
 .nav-links a:hover { opacity: 1; }
-.nav-end { display: flex; }
+.brand { justify-self: start; }
+.nav-end { display: flex; justify-self: end; }
 .nav-cta { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; height: calc(40px - var(--nav-p) * 4px); padding: 0 18px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; letter-spacing: -0.224px; }
 .nav-burger { display: none; width: 44px; height: 44px; margin-right: -10px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
 .nav-burger span { display: block; width: 22px; height: 1.5px; background: currentColor; transition: transform 0.3s ease; }
@@ -438,6 +440,7 @@ ul { list-style: none; }
   .tier-stock .caption { display: none; }
   .tier-logos { display: none; }
   .swap { margin-top: var(--stack-rise, 140px); transform: translateX(-60px); }
+  .nav-bar { display: flex; justify-content: space-between; }
 }
 @media (max-width: 640px) {
   .odds-row { grid-template-columns: 92px 1fr auto; padding: 12px 14px; }
