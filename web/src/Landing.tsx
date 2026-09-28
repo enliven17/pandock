@@ -5,6 +5,7 @@ import Reveal from './sections/Reveal'
 import How from './sections/How'
 import Prizes from './sections/Prizes'
 import Odds from './sections/Odds'
+import Live from './sections/Live'
 import Market from './sections/Market'
 import Footer from './sections/Footer'
 import Mark from './components/Mark'
@@ -42,6 +43,7 @@ export default function Landing() {
       <main>
         <Hero />
         <Reveal />
+        <Live />
         <How />
         <Prizes />
         <Market />
