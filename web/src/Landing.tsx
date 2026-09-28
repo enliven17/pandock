@@ -77,12 +77,15 @@ function Nav() {
     gsap.to(p, { v: 1, ease: 'none', onUpdate: set, scrollTrigger: { start: 0, end: 160, scrub: 0.6 } })
 
     // Entrance: the bar drops in from above the viewport, then its contents settle in one by one.
+    // fromTo with explicit end states: a `from` that re-runs mid-flight (hot reload, a remount) takes the
+    // half-dropped position as its target and leaves the bar stuck above the fold.
     gsap
       .timeline({ delay: 0.15 })
-      .from('.nav-bar', { yPercent: -140, opacity: 0, duration: 1.1, ease: 'expo.out' })
-      .from(
+      .fromTo('.nav-bar', { yPercent: -140, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 1.1, ease: 'expo.out' })
+      .fromTo(
         '.brand, .nav-links li, .nav-end, .nav-burger',
-        { y: -14, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.06 },
+        { y: -14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: 'expo.out', stagger: 0.06 },
         '-=0.75',
       )
     return () => root.style.removeProperty('--nav-p')
