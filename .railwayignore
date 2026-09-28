@@ -1,0 +1,8 @@
+# railway up sends the repo minus what the agent image (agent/Dockerfile) never needs. .gitignore also applies.
+contracts/
+docs/
+agent/log/
+node_modules/
+.env
+.env.*
+*.local
