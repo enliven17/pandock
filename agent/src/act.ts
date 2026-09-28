@@ -1,4 +1,5 @@
 import { execFile, execSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
@@ -9,7 +10,11 @@ import type { Action } from './policy.js'
 const forwarderAbi = parseAbi(['function forward(address target, bytes data) returns (bytes)'])
 const run = promisify(execFile)
 // ponytail: shells out to the Circle CLI (it holds the agent wallet session); move to the W3S API if the CLI gets in the way.
+// Global installs are per Node version (nvm), so this resolves for the Node running the agent.
 const CLI = process.env.CIRCLE_CLI ?? join(execSync('npm root -g').toString().trim(), '@circle-fin', 'cli', 'dist', 'index.js')
+if (CIRCLE && !existsSync(CLI)) throw new Error(`Circle CLI not found for Node ${process.version}: npm i -g @circle-fin/cli (or set CIRCLE_CLI)`)
+// The CLI matches its stored wallets by lower-case address.
+const FROM = AGENT_WALLET?.toLowerCase() as `0x${string}`
 
 /** Every operator action as (target, calldata), so both signers send the same bytes. */
 function encode(a: Action | { kind: 'anchor'; head: `0x${string}` }): { target: `0x${string}`; data: `0x${string}` } {
@@ -27,15 +32,16 @@ function encode(a: Action | { kind: 'anchor'; head: `0x${string}` }): { target: 
 
 /** Circle agent wallet → AgentForwarder → target. Simulated first, so a policy revert costs nothing. */
 async function viaCircle(target: `0x${string}`, data: `0x${string}`) {
-  await client.simulateContract({ address: FORWARDER, abi: forwarderAbi, functionName: 'forward', args: [target, data], account: AGENT_WALLET! })
-  const args = ['wallet', 'execute', 'forward(address,bytes)', target, data, '--contract', FORWARDER, '--address', AGENT_WALLET!]
+  await client.simulateContract({ address: FORWARDER, abi: forwarderAbi, functionName: 'forward', args: [target, data], account: FROM })
+  const args = ['wallet', 'execute', 'forward(address,bytes)', target, data, '--contract', FORWARDER, '--address', FROM]
   args.push('--chain', 'ARC-TESTNET', '--output', 'json', '--idempotency-key', randomUUID())
   let out: string
   try {
     out = (await run(process.execPath, [CLI, ...args], { maxBuffer: 1 << 20 })).stdout
   } catch (e) {
-    const msg = (e as { stdout?: string }).stdout?.match(/"message":\s*"([^"]+)"/)?.[1]
-    throw new Error(`circle: ${msg ?? (e instanceof Error ? e.message.split('\n')[0] : e)}`)
+    const { stdout = '', stderr = '' } = e as { stdout?: string; stderr?: string }
+    const msg = (stdout + stderr).match(/"message":\s*"([^"]+)"/)?.[1] ?? (stderr || stdout).trim().split('\n')[0]
+    throw new Error(`circle: ${msg || (e instanceof Error ? e.message.split('\n')[0] : e)}`)
   }
   const tx = JSON.parse(out).data as { state: string; txHash?: `0x${string}`; id: string }
   if (tx.state !== 'COMPLETE' || !tx.txHash) throw new Error(`circle transaction ${tx.id} is ${tx.state}`)
