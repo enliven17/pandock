@@ -1,5 +1,5 @@
 import { keccak256, toHex } from 'viem'
-import { account, client, PANDOCK, pandockAbi, STOCKS } from './chain.js'
+import { account, AGENT_WALLET, CIRCLE, client, FORWARDER, PANDOCK, pandockAbi, STOCKS } from './chain.js'
 import { act, anchor } from './act.js'
 import { cmcPrices } from './cmc.js'
 import { escalate, json, readQueue, record, writeQueue } from './log.js'
@@ -151,6 +151,6 @@ async function cycle() {
   console.log(new Date().toISOString(), `block ${s.block}`, decider, json({ proposals, rejected: checked.rejected, executed: results, escalated }), { head, anchorTx })
 }
 
-console.log(`Treasurer ${account.address}, every ${MINUTES} min`)
+console.log(`Treasurer ${CIRCLE ? `Circle agent wallet ${AGENT_WALLET} via ${FORWARDER}` : account!.address}, every ${MINUTES} min`)
 await cycle()
 if (!process.argv.includes('--once')) setInterval(() => cycle().catch((e) => console.error('cycle failed:', e)), MINUTES * 60_000)

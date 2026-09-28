@@ -18,11 +18,16 @@ const arcMainnet = defineChain({
   contracts: { multicall3: { address: '0xcA11bde05977b3631167028862bE2a173976CA11' } },
 })
 
+// The Treasurer acts from a Circle agent wallet through the AgentForwarder when the deployment has one;
+// otherwise (local dev) straight from PRIVATE_KEY.
+export const AGENT_WALLET = (deployment as { agentWallet?: string }).agentWallet as `0x${string}` | undefined
+export const CIRCLE = !!AGENT_WALLET && AGENT_WALLET !== '0x0000000000000000000000000000000000000000'
+export const FORWARDER = deployment.operator as `0x${string}`
 const key = process.env.PRIVATE_KEY as `0x${string}` | undefined
-if (!key) throw new Error('PRIVATE_KEY is not set (agent/.env)')
-export const account = privateKeyToAccount(key)
+if (!CIRCLE && !key) throw new Error('PRIVATE_KEY is not set (agent/.env) and the deployment has no Circle agent wallet')
+export const account = key ? privateKeyToAccount(key) : undefined
 export const client = createPublicClient({ chain: arcTestnet, transport: http() })
-export const wallet = createWalletClient({ account, chain: arcTestnet, transport: http() })
+export const wallet = account ? createWalletClient({ account, chain: arcTestnet, transport: http() }) : undefined
 export const mainnet = createPublicClient({ chain: arcMainnet, transport: http() })
 
 export const PANDOCK = deployment.pandock as `0x${string}`
