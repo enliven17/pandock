@@ -1,3 +1,4 @@
+import './circle-home.js' // first: restores the Circle CLI session on hosts without a login
 import { keccak256, toHex } from 'viem'
 import { account, AGENT_WALLET, CIRCLE, client, FORWARDER, PANDOCK, pandockAbi, STOCKS } from './chain.js'
 import { act, anchor } from './act.js'
