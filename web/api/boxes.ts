@@ -39,6 +39,12 @@ const json = (body: unknown, status = 200) =>
 
 type Sql = ReturnType<typeof db>
 
+/** Driver errors can carry the connection string: log them server-side, send the browser a plain message. */
+function fail(e: unknown, message: string) {
+  console.error('api/boxes:', e)
+  return json({ error: message }, 500)
+}
+
 function db() {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not configured on the server')
@@ -85,7 +91,7 @@ export async function GET(req: Request): Promise<Response> {
     }))
     return json({ pending: all.filter((o) => o.status === 'pending'), revealed: all.filter((o) => o.status !== 'pending') })
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : 'database error' }, 500)
+    return fail(e, 'boxes unavailable')
   }
 }
 
@@ -124,6 +130,6 @@ export async function POST(req: Request): Promise<Response> {
     }
     return json({ recorded: logs.length })
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message.split('\n')[0] : 'could not record transaction' }, 500)
+    return fail(e, 'could not record transaction')
   }
 }
