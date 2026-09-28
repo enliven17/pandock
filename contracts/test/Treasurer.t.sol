@@ -110,6 +110,7 @@ contract TreasurerTest is Test {
         emit Pandock.Logged(bytes32(uint256(42)));
         vm.prank(op);
         box.anchor(bytes32(uint256(42)));
+        assertEq(box.anchors(), 1);
     }
 
     function test_policy_onlyOwner() public {

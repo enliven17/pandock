@@ -47,6 +47,7 @@ contract PandockTest is Test {
         _buy(alice, 3);
         assertEq(box.balanceOf(alice, 0), 3);
         assertEq(address(box).balance, 3 * PRICE);
+        assertEq(box.boxesSold(), 3);
     }
 
     function test_buy_wrongPayment() public {
@@ -118,6 +119,8 @@ contract PandockTest is Test {
         vm.roll(block.number + 300);
         box.reveal(id);
         assertEq(nvda.balanceOf(alice), 0.0004 ether);
+        assertEq(box.paidOut(address(nvda)), 0.0004 ether);
+        assertEq(box.nextOpeningId(), 1);
     }
 
     function test_refund_whenPoolDry() public {
@@ -131,6 +134,8 @@ contract PandockTest is Test {
         vm.roll(block.number + 2);
         box.reveal(id);
         assertEq(alice.balance, before + PRICE);
+        assertEq(box.refunds(), 1);
+        assertEq(box.paidOut(address(nvda)), 0);
     }
 
     function test_distribution_roughlyMatchesWeights() public {

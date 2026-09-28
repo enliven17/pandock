@@ -40,7 +40,14 @@ contract Pandock is ERC1155, Ownable {
     uint256 public totalWeight;
 
     mapping(uint256 => Opening) public openings;
-    uint256 public nextOpeningId;
+    uint256 public nextOpeningId; // also the number of boxes ever opened
+
+    // ---- Lifetime totals, so the site reads them in one call instead of scanning events
+    uint256 public boxesSold;
+    uint256 public refunds;
+    uint256 public anchors;
+    /// token => total amount paid out as prizes
+    mapping(address => uint256) public paidOut;
 
     // ---- Treasurer policy, owner-set, operator-bound
     address public operator;
@@ -88,6 +95,7 @@ contract Pandock is ERC1155, Ownable {
         if (amount == 0) revert ZeroAmount();
         if (msg.value != amount * boxPrice) revert WrongPayment();
         _mint(msg.sender, BOX, amount, "");
+        boxesSold += amount;
         emit Bought(msg.sender, amount);
     }
 
@@ -133,10 +141,12 @@ contract Pandock is ERC1155, Ownable {
         if (p.token == address(0)) {
             emit Revealed(id, o.opener, address(0), 0);
         } else if (IERC20(p.token).balanceOf(address(this)) >= p.amount) {
+            paidOut[p.token] += p.amount;
             IERC20(p.token).safeTransfer(o.opener, p.amount);
             emit Revealed(id, o.opener, p.token, p.amount);
         } else {
             // ponytail: pool ran dry for this prize → refund the current box price.
+            ++refunds;
             _sendNative(o.opener, boxPrice);
             emit Refunded(id, o.opener, boxPrice);
         }
@@ -193,6 +203,7 @@ contract Pandock is ERC1155, Ownable {
 
     /// @notice Anchors the head of the Treasurer's hash-chained decision log.
     function anchor(bytes32 head) external onlyOperator {
+        ++anchors;
         emit Logged(head);
     }
 
