@@ -388,8 +388,9 @@ ul { list-style: none; }
 .tier:nth-child(even) { background: var(--parchment); }
 .tier-head { font-size: 13px; color: var(--ink-48); padding-top: 0; padding-bottom: 6px; background: none !important; }
 .tier-value { font-family: var(--display); font-size: 21px; font-weight: 600; letter-spacing: -0.02em; }
-.tier-stock { display: inline-flex; align-items: center; gap: 10px; }
+.tier-stock { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; min-width: 0; }
 .tier-logo { width: 18px; height: 18px; flex-shrink: 0; }
+.tier-logos { display: inline-flex; gap: 6px; }
 .tier-bar { height: 10px; border-radius: 99px; background: #e8e8ed; overflow: hidden; }
 .tier-fill { display: block; height: 100%; border-radius: 99px; background: var(--ink); transform-origin: left center; }
 .tier-pct { text-align: right; }
@@ -435,6 +436,7 @@ ul { list-style: none; }
   .stats-4 { grid-template-columns: repeat(2, 1fr); }
   .tier { grid-template-columns: 84px 1fr 72px 44px; gap: 12px; padding: 12px 12px; }
   .tier-stock .caption { display: none; }
+  .tier-logos { display: none; }
   .swap { margin-top: var(--stack-rise, 140px); transform: translateX(-60px); }
 }
 @media (max-width: 640px) {
