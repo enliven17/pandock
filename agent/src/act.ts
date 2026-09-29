@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
-import { encodeFunctionData, parseAbi } from 'viem'
+import { encodeFunctionData, getAbiItem, parseAbi, toFunctionSignature, type Abi } from 'viem'
 import { AGENT_WALLET, CIRCLE, client, FORWARDER, MARKET, marketAbi, PANDOCK, pandockAbi, wallet } from './chain.js'
 import type { Action } from './policy.js'
 
@@ -37,7 +37,12 @@ function encode(a: Action | { kind: 'anchor'; head: `0x${string}` }): { target: 
 /** Circle agent wallet → AgentForwarder → target. Simulated first, so a policy revert costs nothing. */
 async function viaCircle(target: `0x${string}`, data: `0x${string}`) {
   await client.simulateContract({ address: FORWARDER, abi: forwarderAbi, functionName: 'forward', args: [target, data], account: FROM })
-  const args = ['wallet', 'execute', 'forward(address,bytes)', target, data, '--contract', FORWARDER, '--address', FROM]
+  return circleExecute(FORWARDER, 'forward(address,bytes)', [target, data])
+}
+
+/** One `circle wallet execute` from the agent wallet. The CLI takes flat arguments only (no arrays or tuples). */
+async function circleExecute(contract: `0x${string}`, signature: string, params: string[]) {
+  const args = ['wallet', 'execute', signature, ...params, '--contract', contract, '--address', FROM]
   args.push('--chain', 'ARC-TESTNET', '--output', 'json', '--idempotency-key', randomUUID())
   let out: string
   try {
@@ -68,3 +73,12 @@ const send = (a: Parameters<typeof encode>[0]) => {
 
 export const act = (a: Action) => send(a)
 export const anchor = (head: `0x${string}`) => send({ kind: 'anchor', head })
+
+/** A direct call from the agent wallet to a contract with flat arguments (the gift jar), simulated first. */
+export async function call(contract: `0x${string}`, abi: Abi, functionName: string, args: readonly (string | bigint)[]) {
+  const account = CIRCLE ? FROM : wallet!.account
+  await client.simulateContract({ address: contract, abi, functionName, args, account } as Parameters<typeof client.simulateContract>[0])
+  if (!CIRCLE) return viaKey(contract, encodeFunctionData({ abi, functionName, args } as Parameters<typeof encodeFunctionData>[0]))
+  const item = getAbiItem({ abi, name: functionName } as Parameters<typeof getAbiItem>[0])
+  return circleExecute(contract, toFunctionSignature(item as Parameters<typeof toFunctionSignature>[0]), args.map(String))
+}
