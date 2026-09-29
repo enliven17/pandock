@@ -5,6 +5,8 @@ import {Script, console} from "forge-std/Script.sol";
 import {Pandock, IPriceSource} from "../src/Pandock.sol";
 import {MockMarket} from "../src/MockMarket.sol";
 import {AgentForwarder} from "../src/AgentForwarder.sol";
+import {GiftJar} from "../src/GiftJar.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 interface IArcOracle {
     function getPrice(address underlying) external view returns (uint256);
@@ -45,7 +47,8 @@ abstract contract MainnetPrices is Script {
 /// forge script script/Deploy.s.sol --tc Deploy --rpc-url https://rpc.testnet.arc.io --private-key $PK --broadcast
 /// Set MAINNET=1 to deploy Pandock only; fund it with STOCK.arc and call setPolicy / setPrizes separately.
 /// OPERATOR=0x… sets the Treasurer agent's address (defaults to the deployer).
-/// AGENT_WALLET=0x… (a Circle agent wallet) instead deploys an AgentForwarder for it and makes that the operator.
+/// AGENT_WALLET=0x… (a Circle agent wallet) instead deploys an AgentForwarder for it and makes that the operator,
+/// plus the GiftJar the Telegram bot gifts from (the wallet is its operator; 5 boxes per sender per day).
 contract Deploy is MainnetPrices {
     // Prize tiers in USD (6 dp) and weights per stock, out of 1000 draws: 8 × (80 + 12 + 1) = 744 wins, 256 empty.
     // Expected payout 8 × (80×0.05 + 12×0.30 + 1×2.00) / 1000 = $0.0768 on a $0.10 box = 76.8%.
@@ -53,6 +56,7 @@ contract Deploy is MainnetPrices {
     uint96[3] TIER_WEIGHT = [uint96(80), 12, 1];
     uint96 constant EMPTY_WEIGHT = 256;
     uint256 constant POOL_USD = 500e6; // seed each stock's pool with $500 of mock shares
+    address giftJar; // storage, not a local: run() is at the stack limit
 
     function run() external {
         bool mainnet = vm.envOr("MAINNET", false);
@@ -71,6 +75,8 @@ contract Deploy is MainnetPrices {
         if (agentWallet != address(0)) {
             operator = address(new AgentForwarder(agentWallet, address(box), address(market)));
             console.log("AgentForwarder", operator);
+            giftJar = address(new GiftJar(IERC1155(address(box)), agentWallet, 5));
+            console.log("GiftJar", giftJar);
         }
         (string[8] memory sym,) = stocks();
         address[8] memory tok;
@@ -116,6 +122,7 @@ contract Deploy is MainnetPrices {
         vm.serializeAddress(o, "market", market);
         vm.serializeAddress(o, "operator", operator);
         vm.serializeAddress(o, "agentWallet", agentWallet);
+        if (giftJar != address(0)) vm.serializeAddress(o, "giftJar", giftJar);
         string memory json = vm.serializeString(o, "stocks", stocksJson);
         vm.writeJson(json, "../web/src/deployments/arc-testnet.json");
     }
