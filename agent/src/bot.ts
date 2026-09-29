@@ -40,6 +40,13 @@ async function tg<T = unknown>(method: string, body: Record<string, unknown> = {
 }
 const say = (chat: number, text: string, extra: Record<string, unknown> = {}) =>
   tg('sendMessage', { chat_id: chat, text, disable_web_page_preview: true, ...extra }).catch((e) => console.error(e))
+/** One of the site's photo cards (web/public/tg/, made in brand/source/tg.html) with a personal caption. */
+const card = (chat: number, kind: 'linked' | 'gift' | 'bought', caption: string) =>
+  tg('sendPhoto', { chat_id: chat, photo: `${SITE}/tg/${kind}.png`, caption }).catch((e) => {
+    console.error('card:', e)
+    return say(chat, caption) // a photo that fails to load still leaves the words
+  })
+const boxesN = (n: bigint | number) => `${n} sealed box${BigInt(n) > 1n ? 'es' : ''}`
 
 const ready = (async () => {
   await sql`create table if not exists tg_links (
@@ -48,6 +55,12 @@ const ready = (async () => {
     code text primary key, tg_user_id bigint not null, username text, expires_at timestamptz not null, used_at timestamptz)`
   await sql`create table if not exists tg_state (key text primary key, value text not null)`
   await sql`alter table escalations add column if not exists notified_at timestamptz`
+  await sql`create table if not exists purchases (
+    tx text not null, log_index int not null, buyer text not null, amount int not null, block bigint not null,
+    primary key (tx, log_index))`
+  // Rows that exist when this column first appears count as already told; new rows default to untold.
+  await sql`alter table purchases add column if not exists notified boolean not null default true`
+  await sql`alter table purchases alter column notified set default false`
 })()
 
 /** Chat accounts in the gift jar: by user id, or by username for someone we have never seen. */
@@ -113,11 +126,14 @@ async function gift(m: Message) {
   try {
     if (friend) {
       const tx = await call(GIFT_JAR, jarAbi, 'gift', [from.wallet, friend.wallet, BigInt(n), messageId])
-      return say(m.chat.id, `🎁 ${tag(m.from!)} sent ${tag(to)} ${n} sealed box${n > 1 ? 'es' : ''}. tx ${tx.slice(0, 10)}…`)
+      await card(m.chat.id, 'gift', `🎁 ${tag(m.from!)} sent ${tag(to)} ${boxesN(n)}. tx ${tx.slice(0, 10)}…`)
+      if (to.id && m.chat.type !== 'private')
+        await card(to.id, 'gift', `🎁 ${tag(m.from!)} sent you ${boxesN(n)}. Open ${n > 1 ? 'them' : 'it'} on ${SITE}/app/boxes`)
+      return
     }
     const account = to.id ? byId(to.id) : byName(to.username!)
     const tx = await call(GIFT_JAR, jarAbi, 'hold', [from.wallet, account, BigInt(n), messageId])
-    return say(m.chat.id, `🎁 ${n} box${n > 1 ? 'es' : ''} from ${tag(m.from!)} held for ${tag(to)}. ${tag(to)}, send me /link in a private chat to claim. tx ${tx.slice(0, 10)}…`)
+    return card(m.chat.id, 'gift', `🎁 ${boxesN(n)} from ${tag(m.from!)}, held for ${tag(to)}. ${tag(to)}, send me /link in a private chat to claim. tx ${tx.slice(0, 10)}…`)
   } catch (e) {
     console.error('gift failed:', e)
     const why = e instanceof Error && /OverDailyLimit/.test(e.message) ? 'that is over your daily gifting limit' : 'the transaction did not go through'
@@ -192,8 +208,28 @@ async function deliverHeld() {
       got += n
     }
     await sql`update tg_links set claimed = true where tg_user_id = ${l.tg_user_id}`
-    if (got) await say(Number(l.tg_user_id), `🎁 ${got} sealed box${got > 1n ? 'es' : ''} waiting for you just landed in your wallet. Open them on ${SITE}/app/boxes`)
+    const wallet = `${l.wallet.slice(0, 6)}…${l.wallet.slice(-4)}`
+    await card(
+      Number(l.tg_user_id),
+      'linked',
+      got
+        ? `Linked to ${wallet}. ${boxesN(got)} waiting for you just landed there. Open them on ${SITE}/app/boxes`
+        : `Linked to ${wallet}. Park boxes on ${SITE}/app/gift, then /gift @friend 1 in any chat.`,
+    )
   }
+}
+
+/** New box purchases by linked wallets: a card to the buyer, once per purchase. */
+async function notifyPurchases() {
+  const rows = (await sql`
+    select p.tx, p.log_index, p.amount, l.tg_user_id from purchases p join tg_links l on l.wallet = p.buyer
+    where not p.notified order by p.block`) as { tx: string; log_index: number; amount: number; tg_user_id: string }[]
+  for (const r of rows) {
+    await card(Number(r.tg_user_id), 'bought', `📦 You bought ${boxesN(r.amount)}. Open them on ${SITE}/app/boxes, or /gift one on.`)
+    await sql`update purchases set notified = true where tx = ${r.tx} and log_index = ${r.log_index}`
+  }
+  // Buyers without a linked account are not told later, when they link.
+  await sql`update purchases set notified = true where not notified and buyer not in (select wallet from tg_links)`
 }
 
 // ---------------------------------------------------------------- loop
@@ -214,6 +250,7 @@ export async function startBot() {
   setInterval(() => {
     notifyEscalations().catch((e) => console.error('escalations:', e))
     deliverHeld().catch((e) => console.error('deliver:', e))
+    notifyPurchases().catch((e) => console.error('purchases:', e))
   }, 20_000)
 
   let offset = Number(((await sql`select value from tg_state where key = 'offset'`)[0] as { value: string } | undefined)?.value ?? 0)
