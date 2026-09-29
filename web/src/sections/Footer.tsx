@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useBlockNumber } from 'wagmi'
-import { chain, PANDOCK } from '../config'
+import { chain, PANDOCK, TELEGRAM_BOT, X_HANDLE } from '../config'
 import { short } from '../format'
 import { gsap, reducedMotion, useGSAP } from '../motion'
 import SplitReveal from '../components/SplitReveal'
@@ -80,6 +80,15 @@ export default function Footer() {
                 {label}
               </a>
             ))}
+          </div>
+          <div className="footer-col">
+            <span className="caption-strong">Follow</span>
+            <a href={`https://x.com/${X_HANDLE}`} target="_blank" rel="noreferrer">
+              X @{X_HANDLE}
+            </a>
+            <a href={`https://t.me/${TELEGRAM_BOT}`} target="_blank" rel="noreferrer">
+              Telegram @{TELEGRAM_BOT}
+            </a>
           </div>
           <div className="footer-col">
             <span className="caption-strong">Network</span>
