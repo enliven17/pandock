@@ -32,6 +32,7 @@ export const mainnet = createPublicClient({ chain: arcMainnet, transport: http()
 
 export const PANDOCK = deployment.pandock as `0x${string}`
 export const MARKET = deployment.market as `0x${string}`
+export const GIFT_JAR = (deployment as { giftJar?: string }).giftJar as `0x${string}` | undefined
 /** symbol (NVDA) → testnet mock token */
 export const STOCKS = Object.fromEntries(
   Object.entries(deployment.stocks).map(([s, a]) => [s.replace('.arc', ''), a as `0x${string}`]),
@@ -60,6 +61,7 @@ export const marketAbi = parseAbi([
 export const pandockAbi = parseAbi([
   'struct Prize { address token; uint96 weight; uint256 amount; }',
   'function boxPrice() view returns (uint256)',
+  'function balanceOf(address account, uint256 id) view returns (uint256)',
   'function prizes() view returns (Prize[])',
   'function nextOpeningId() view returns (uint256)',
   'function openings(uint256) view returns (address opener, uint64 targetBlock)',
@@ -74,4 +76,14 @@ export const pandockAbi = parseAbi([
   'function anchor(bytes32 head)',
   'event Bought(address indexed buyer, uint256 amount)',
   'event Opened(uint256 indexed openingId, address indexed opener, uint64 targetBlock)',
+])
+
+export const jarAbi = parseAbi([
+  'function deposits(address) view returns (uint256)',
+  'function held(bytes32) view returns (uint256)',
+  'function handled(uint256) view returns (bool)',
+  'function dailyLimit() view returns (uint256)',
+  'function gift(address from, address to, uint256 amount, uint256 messageId)',
+  'function hold(address from, bytes32 account, uint256 amount, uint256 messageId)',
+  'function claim(bytes32 account, address to)',
 ])

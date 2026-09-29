@@ -5,7 +5,7 @@ import { keccak256, toHex } from 'viem'
 // lasting filesystem, and the site's Treasurer page reads the same rows.
 const url = process.env.DATABASE_URL
 if (!url) throw new Error('DATABASE_URL is not set (agent/.env)')
-const sql = neon(url)
+export const sql = neon(url)
 
 export const json = (v: unknown) => JSON.stringify(v, (_, x) => (typeof x === 'bigint' ? x.toString() : x))
 const GENESIS = keccak256(toHex('pandock-treasurer'))
