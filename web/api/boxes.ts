@@ -19,6 +19,7 @@ const client = createPublicClient({ chain: arcTestnet, transport: http() })
 const PANDOCK = deployment.pandock.toLowerCase()
 
 const events = parseAbi([
+  'event Bought(address indexed buyer, uint256 amount)',
   'event Opened(uint256 indexed openingId, address indexed opener, uint64 targetBlock)',
   'event Expired(uint256 indexed openingId, address indexed opener)',
   'event Revealed(uint256 indexed openingId, address indexed opener, address token, uint256 amount)',
@@ -68,7 +69,10 @@ const schema = (sql: Sql) =>
       opened_at timestamptz not null default now(),
       revealed_at timestamptz,
       primary key (pandock, id)
-    )`.then(() => sql`create index if not exists openings_opener on openings (pandock, opener)`))
+    )`.then(() => sql`create index if not exists openings_opener on openings (pandock, opener)`)
+    .then(() => sql`create table if not exists purchases (
+      tx text not null, log_index int not null, buyer text not null, amount int not null, block bigint not null,
+      primary key (tx, log_index))`))
 
 export async function GET(req: Request): Promise<Response> {
   const owner = new URL(req.url).searchParams.get('owner') ?? ''
@@ -105,6 +109,14 @@ export async function POST(req: Request): Promise<Response> {
     const sql = db()
     await schema(sql)
     for (const l of logs) {
+      // Buys feed the leaderboard right away (the agent also indexes them, so nothing is missed).
+      if (l.eventName === 'Bought') {
+        await sql`
+          insert into purchases (tx, log_index, buyer, amount, block)
+          values (${body.tx}, ${l.logIndex}, ${l.args.buyer.toLowerCase()}, ${Number(l.args.amount)}, ${l.blockNumber.toString()})
+          on conflict do nothing`
+        continue
+      }
       const id = l.args.openingId.toString()
       const opener = l.args.opener.toLowerCase()
       if (l.eventName === 'Opened')
