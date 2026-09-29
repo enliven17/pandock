@@ -1,0 +1,1 @@
+{"name":"pandock-brand","private":true,"type":"module","scripts":{"render":"node render.mjs"},"devDependencies":{"puppeteer-core":"^24.43.1"}}

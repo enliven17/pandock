@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pandock profile</title>
+  <link rel="stylesheet" href="base.css" />
+  <style>
+    /* 400×400, circle-safe: X and Telegram crop avatars to a circle. */
+    .canvas { width: 400px; height: 400px; display: grid; place-items: center; }
+    .glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgb(41 151 255 / 0.42), rgb(41 151 255 / 0) 55%); }
+    .mark { position: relative; width: 236px; filter: drop-shadow(0 0 18px rgb(41 151 255 / 0.55)); }
+    .mark svg { width: 100%; height: auto; display: block; }
+  </style>
+</head>
+<body>
+  <div class="canvas"><div class="glow"></div><div class="mark" id="mark"></div></div>
+  <script type="module">
+    import { markSVG } from './parts.js'
+    document.getElementById('mark').innerHTML = markSVG()
+  </script>
+</body>
+</html>
