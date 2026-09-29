@@ -1,14 +1,22 @@
 {
-  "name": "pandock-launch",
-  "width": 1080,
-  "height": 1350,
-  "fps": 60,
-  "duration": 12,
-  "bpm": 120,
-  "speed": 1,
-  "subframes": 6,
-  "fonts": {
-    "css": ["@fontsource/inter/400.css", "@fontsource/inter/600.css", "@fontsource/inter/700.css"],
-    "preload": ["400 40px Inter", "600 40px Inter", "700 40px Inter"]
-  }
+    "name":  "pandock-launch",
+    "width":  1080,
+    "height":  1350,
+    "fps":  60,
+    "duration":  10,
+    "bpm":  120,
+    "speed":  1,
+    "subframes":  6,
+    "fonts":  {
+                  "css":  [
+                              "@fontsource/inter/400.css",
+                              "@fontsource/inter/600.css",
+                              "@fontsource/inter/700.css"
+                          ],
+                  "preload":  [
+                                  "400 40px Inter",
+                                  "600 40px Inter",
+                                  "700 40px Inter"
+                              ]
+              }
 }
