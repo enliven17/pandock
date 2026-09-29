@@ -11,11 +11,13 @@ import BuyPage from './BuyPage'
 import BoxesPage from './BoxesPage'
 import GiftPage from './GiftPage'
 import LinkPage from './LinkPage'
+import LeaderboardPage from './LeaderboardPage'
 
 const TABS = [
   { to: '/app', label: 'Buy' },
   { to: '/app/boxes', label: 'My boxes' },
   { to: '/app/gift', label: 'Gift' },
+  { to: '/app/leaderboard', label: 'Leaderboard' },
 ]
 
 export function WalletButton({ className = 'nav-cta' }: { className?: string }) {
@@ -35,7 +37,9 @@ export default function AppShell() {
   const path = usePath()
   const boxes = useBoxes()
   const { switchChain, isPending: switching } = useSwitchChain()
-  const Page = path.startsWith('/app/boxes') ? BoxesPage : path.startsWith('/app/gift') ? GiftPage : path.startsWith('/app/link') ? LinkPage : BuyPage
+  const Page = path.startsWith('/app/boxes') ? BoxesPage : path.startsWith('/app/gift') ? GiftPage : path.startsWith('/app/link') ? LinkPage : path.startsWith('/app/leaderboard') ? LeaderboardPage : BuyPage
+  // The leaderboard is public; every other page needs a wallet.
+  const open = Page === LeaderboardPage
 
   return (
     <div className="app">
@@ -84,7 +88,7 @@ export default function AppShell() {
           </div>
         )}
 
-        {boxes.isConnected ? (
+        {boxes.isConnected || open ? (
           <Page boxes={boxes} />
         ) : (
           <section className="app-connect">
