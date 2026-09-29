@@ -30,12 +30,13 @@
     const CARDS = {
       linked: { title: 'Linked.<span>Ready to gift.</span>', lead: 'Send boxes from any chat with /gift.', boxes: [[0, 30, 420]] },
       gift: { title: 'A box<span>for you.</span>', lead: 'Sealed. Open it to see which stock is inside.', boxes: [[0, 30, 420]] },
-      bought: { title: 'Sealed<span>and yours.</span>', lead: 'Open them whenever you like, or gift one on.', boxes: [[70, 0, 290], [-50, 150, 290], [170, 150, 290]] }, // back one first, so the front two overlap it
+      bought: { title: 'Sealed<span>and yours.</span>', lead: 'Open them whenever you like, or gift one on.', boxes: [[135, 0, 210], [0, 225, 210], [270, 225, 210]], wide: true }, // a small pyramid with air between the boxes
     }
     const c = CARDS[new URLSearchParams(location.search).get('kind')] ?? CARDS.linked
     document.getElementById('title').innerHTML = c.title
     document.getElementById('lead').textContent = c.lead
     document.getElementById('brand').innerHTML = markSVG('#c7c7cc') + 'Pandock'
+    if (c.wide) Object.assign(document.getElementById('stage').style, { width: '480px', right: '96px' })
     document.getElementById('stage').innerHTML = c.boxes
       .map(([x, y, w]) => `<div class="box" style="left:${x}px;top:${y}px;width:${w}px">${boxSVG()}</div>`)
       .join('')
