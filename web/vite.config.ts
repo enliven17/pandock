@@ -40,6 +40,7 @@ function api(): Plugin {
     configureServer(server) {
       route(server, '/api/rwa')
       route(server, '/api/boxes')
+      route(server, '/api/link')
     },
   }
 }
