@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pandock Telegram card</title>
+  <link rel="stylesheet" href="base.css" />
+  <style>
+    /* 1280×720 photo cards the bot sends: ?kind=linked | gift | bought. Matte, like the launch video.
+       The personal part (who, how many) goes in the message caption, so one image serves everyone. */
+    .canvas { width: 1280px; height: 720px; background: radial-gradient(ellipse at 70% 55%, #2a2a2d 0%, #18181a 55%, #131314 100%); }
+    .copy { position: absolute; left: 96px; top: 50%; translate: 0 -50%; }
+    h1 { font-size: 96px; font-weight: 700; letter-spacing: -3.4px; line-height: 1.02; color: #e8e8ea; }
+    h1 span { display: block; color: #6096d6; }
+    p { margin-top: 22px; font-size: 26px; color: #8e8e93; letter-spacing: -0.2px; max-width: 19em; line-height: 1.35; }
+    .brand { position: absolute; left: 96px; bottom: 56px; display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 700; color: #c7c7cc; letter-spacing: -0.4px; }
+    .brand svg { width: 34px; height: auto; }
+    .stage { position: absolute; right: 110px; top: 50%; translate: 0 -50%; width: 420px; height: 440px; }
+    .box { position: absolute; filter: drop-shadow(0 24px 34px rgb(0 0 0 / 0.5)); }
+    .box svg { width: 100%; height: auto; display: block; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="copy"><h1 id="title"></h1><p id="lead"></p></div>
+    <div class="brand" id="brand"></div>
+    <div class="stage" id="stage"></div>
+  </div>
+  <script type="module">
+    import { boxSVG, markSVG } from './parts.js'
+    const CARDS = {
+      linked: { title: 'Linked.<span>Ready to gift.</span>', lead: 'Send boxes from any chat with /gift.', boxes: [[0, 30, 420]] },
+      gift: { title: 'A box<span>for you.</span>', lead: 'Sealed. Open it to see which stock is inside.', boxes: [[0, 30, 420]] },
+      bought: { title: 'Sealed<span>and yours.</span>', lead: 'Open them whenever you like, or gift one on.', boxes: [[70, 0, 290], [-50, 150, 290], [170, 150, 290]] }, // back one first, so the front two overlap it
+    }
+    const c = CARDS[new URLSearchParams(location.search).get('kind')] ?? CARDS.linked
+    document.getElementById('title').innerHTML = c.title
+    document.getElementById('lead').textContent = c.lead
+    document.getElementById('brand').innerHTML = markSVG('#c7c7cc') + 'Pandock'
+    document.getElementById('stage').innerHTML = c.boxes
+      .map(([x, y, w]) => `<div class="box" style="left:${x}px;top:${y}px;width:${w}px">${boxSVG()}</div>`)
+      .join('')
+  </script>
+</body>
+</html>
