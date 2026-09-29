@@ -6,8 +6,11 @@
 //   POST /api/link { code, address, signature }   → links them; the bot then delivers any boxes held for them
 
 import { neon } from '@neondatabase/serverless'
-import { isAddress, isHex, verifyMessage } from 'viem'
-import { linkMessage } from '../src/linkMessage.ts'
+import { getAddress, isAddress, isHex, verifyMessage } from 'viem'
+
+// ponytail: a copy of src/linkMessage.ts: Vercel bundles api/ on its own and cannot import from src/. Keep both identical.
+const linkMessage = (username: string | null, tgUserId: string, address: string, code: string) =>
+  `Link Telegram ${username ? `@${username}` : 'account'} (${tgUserId}) to ${getAddress(address)} on Pandock.\nCode: ${code}`
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
