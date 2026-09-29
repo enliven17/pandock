@@ -138,6 +138,8 @@ async function onMessage(m: Message) {
   if (cmd === '/link') return link(m)
   if (cmd === '/gift') return gift(m)
   if (cmd === '/boxes') return boxes(m)
+  // The owner's id goes in TELEGRAM_OWNER_ID so escalations reach them.
+  if (cmd === '/id') return say(m.chat.id, `Your Telegram id: ${m.from.id}`)
 }
 
 // ---------------------------------------------------------------- approvals
