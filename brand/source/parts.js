@@ -7,11 +7,13 @@ const LID_MARK = `matrix(${a} ${b} ${c} ${d} ${160 - (a * mx + c * my)} ${90 - (
 const face = (pts, fill) => `<polygon points="${pts}" fill="${fill}" stroke="${fill}" stroke-width="0.8" stroke-linejoin="round"/>`
 
 /** The box as SVG (viewBox 320x300). open: lid off and light spilling out of the top. */
-export function boxSVG({ open = false } = {}) {
-  const lid = open ? '' : `<g>${face('30,90 160,155 160,170 30,105', '#27272a')}${face('290,90 160,155 160,170 290,105', '#38383b')}${face('160,25 290,90 160,155 30,90', '#48484b')}<path d="${MARK_PATH}" fill="#5e5e62" transform="${LID_MARK}"/></g>`
+export function boxSVG({ open = false, glowMark = false } = {}) {
+  const lid = open ? '' : `<g>${face('30,90 160,155 160,170 30,105', '#27272a')}${face('290,90 160,155 160,170 290,105', '#38383b')}${face('160,25 290,90 160,155 30,90', '#48484b')}<path d="${MARK_PATH}" fill="${glowMark ? '#8e8e94' : '#5e5e62'}" transform="${LID_MARK}"${glowMark ? ' filter="url(#markGlow)"' : ''}/></g>`
+  // a soft blue halo around the lid's mark, nothing else lights up
+  const halo = glowMark ? '<defs><filter id="markGlow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="22" flood-color="#2997ff" flood-opacity="0.55"/></filter></defs>' : ''
   const inside = open ? `<defs><radialGradient id="spill" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#8ec5ff" stop-opacity="0.95"/><stop offset="0.5" stop-color="#2997ff" stop-opacity="0.35"/><stop offset="1" stop-color="#2997ff" stop-opacity="0"/></radialGradient></defs>`
     + face('160,40 290,105 160,170 30,105', '#12263b') : face('160,40 290,105 160,170 30,105', '#0b0b0c')
-  return `<svg viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg" overflow="visible">${inside}${face('30,105 160,170 160,280 30,215', '#1d1d1f')}${face('290,105 160,170 160,280 290,215', '#2c2c2e')}${lid}${open ? '<ellipse cx="160" cy="92" rx="118" ry="62" fill="url(#spill)"/>' : ''}</svg>`
+  return `<svg viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg" overflow="visible">${halo}${inside}${face('30,105 160,170 160,280 30,215', '#1d1d1f')}${face('290,105 160,170 160,280 290,215', '#2c2c2e')}${lid}${open ? '<ellipse cx="160" cy="92" rx="118" ry="62" fill="url(#spill)"/>' : ''}</svg>`
 }
 
 export const markSVG = (fill = '#f5f5f7') => `<svg viewBox="0 0 ${MARK_W} ${MARK_H}" xmlns="http://www.w3.org/2000/svg"><path d="${MARK_PATH}" fill="${fill}"/></svg>`
