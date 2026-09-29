@@ -2,6 +2,7 @@ import './circle-home.js' // first: restores the Circle CLI session on hosts wit
 import { keccak256, toHex } from 'viem'
 import { account, AGENT_WALLET, CIRCLE, client, FORWARDER, PANDOCK, pandockAbi, STOCKS } from './chain.js'
 import { act, anchor } from './act.js'
+import { startBot } from './bot.js'
 import { cmcPrices } from './cmc.js'
 import { decide as settle, escalate, escalations, json, record } from './log.js'
 import { observe, type State } from './observe.js'
@@ -151,4 +152,7 @@ async function cycle() {
 
 console.log(`Treasurer ${CIRCLE ? `Circle agent wallet ${AGENT_WALLET} via ${FORWARDER}` : account!.address}, every ${MINUTES} min`)
 await cycle()
-if (!process.argv.includes('--once')) setInterval(() => cycle().catch((e) => console.error('cycle failed:', e)), MINUTES * 60_000)
+if (!process.argv.includes('--once')) {
+  setInterval(() => cycle().catch((e) => console.error('cycle failed:', e)), MINUTES * 60_000)
+  void startBot()
+}
