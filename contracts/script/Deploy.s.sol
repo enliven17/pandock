@@ -118,6 +118,7 @@ contract Deploy is MainnetPrices {
         }
         string memory o = "deployment";
         vm.serializeUint(o, "chainId", block.chainid);
+        vm.serializeUint(o, "deployBlock", block.number); // a lower bound: indexers scan events from here
         vm.serializeAddress(o, "pandock", box);
         vm.serializeAddress(o, "market", market);
         vm.serializeAddress(o, "operator", operator);

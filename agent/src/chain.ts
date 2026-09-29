@@ -32,6 +32,8 @@ export const mainnet = createPublicClient({ chain: arcMainnet, transport: http()
 
 export const PANDOCK = deployment.pandock as `0x${string}`
 export const MARKET = deployment.market as `0x${string}`
+/** First block worth scanning for Pandock events. */
+export const DEPLOY_BLOCK = BigInt((deployment as { deployBlock?: number }).deployBlock ?? 0)
 export const GIFT_JAR = (deployment as { giftJar?: string }).giftJar as `0x${string}` | undefined
 /** symbol (NVDA) → testnet mock token */
 export const STOCKS = Object.fromEntries(

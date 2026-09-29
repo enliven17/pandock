@@ -3,6 +3,7 @@ import { keccak256, toHex } from 'viem'
 import { account, AGENT_WALLET, CIRCLE, client, FORWARDER, PANDOCK, pandockAbi, STOCKS } from './chain.js'
 import { act, anchor } from './act.js'
 import { startBot } from './bot.js'
+import { indexPurchases } from './indexer.js'
 import { cmcPrices } from './cmc.js'
 import { decide as settle, escalate, escalations, json, record } from './log.js'
 import { observe, type State } from './observe.js'
@@ -55,6 +56,8 @@ async function check(s: State, ok: string[], proposals: Proposal[]) {
 }
 
 async function cycle() {
+  // Leaderboard data: never let it stop the Treasurer's own work.
+  await indexPurchases().catch((e) => console.error('index purchases:', e instanceof Error ? e.message.split('\n')[0] : e))
   const s = await observe()
   const cmc = await cmcPrices(Object.keys(STOCKS))
   const { ok, notes: unconfirmed } = confirmed(s, cmc)
