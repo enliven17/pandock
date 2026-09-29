@@ -10,6 +10,7 @@ import { useBoxes } from './useBoxes'
 import BuyPage from './BuyPage'
 import BoxesPage from './BoxesPage'
 import GiftPage from './GiftPage'
+import LinkPage from './LinkPage'
 
 const TABS = [
   { to: '/app', label: 'Buy' },
@@ -34,7 +35,7 @@ export default function AppShell() {
   const path = usePath()
   const boxes = useBoxes()
   const { switchChain, isPending: switching } = useSwitchChain()
-  const Page = path.startsWith('/app/boxes') ? BoxesPage : path.startsWith('/app/gift') ? GiftPage : BuyPage
+  const Page = path.startsWith('/app/boxes') ? BoxesPage : path.startsWith('/app/gift') ? GiftPage : path.startsWith('/app/link') ? LinkPage : BuyPage
 
   return (
     <div className="app">
