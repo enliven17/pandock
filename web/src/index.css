@@ -476,3 +476,13 @@ ul { list-style: none; }
   .how-numeral { display: none; }
   .how-dots { display: none; }
 }
+
+/* Gift from Telegram: parking boxes in the gift jar. */
+.tg-gifting { margin-top: 24px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center; background: var(--parchment); border-radius: var(--r-lg); padding: 32px; }
+.tg-copy { display: flex; flex-direction: column; gap: 10px; }
+.tg-title { font-family: var(--display); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.tg-copy code { font-size: 0.92em; background: rgb(0 0 0 / 0.06); padding: 1px 6px; border-radius: 6px; }
+.tg-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.tg-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.tg-amount { width: 84px; background: var(--canvas); }
+@media (max-width: 833px) { .tg-gifting { grid-template-columns: 1fr; padding: 24px; } }

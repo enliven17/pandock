@@ -7,6 +7,7 @@ import Link from '../components/Link'
 import Box from '../components/Box'
 import Magnetic from '../components/Magnetic'
 import PageHeader from './PageHeader'
+import TelegramGifting from './TelegramGifting'
 import type { Boxes } from './AppShell'
 
 const SHOW = 10 // box drawings in the summary, at most
@@ -138,6 +139,7 @@ export default function GiftPage({ boxes }: { boxes: Boxes }) {
           </Magnetic>
         </div>
       </div>
+      <TelegramGifting boxes={boxes} />
       {error && <p className="caption error">{error}</p>}
     </section>
   )

@@ -126,4 +126,14 @@ export const pandockAbi = parseAbi([
   'function refunds() view returns (uint256)',
   'function anchors() view returns (uint256)',
   'function paidOut(address token) view returns (uint256)',
+  'function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes data)',
+])
+
+/** The jar the Telegram bot gifts from: park boxes with a plain transfer, take them back any time. */
+export const GIFT_JAR = (onTestnet ? (testnet as { giftJar?: string }).giftJar : undefined) as `0x${string}` | undefined
+export const TELEGRAM_BOT = 'pandockbot'
+export const jarAbi = parseAbi([
+  'function deposits(address) view returns (uint256)',
+  'function dailyLimit() view returns (uint256)',
+  'function withdraw(uint256 amount)',
 ])
