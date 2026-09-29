@@ -41,6 +41,7 @@ function api(): Plugin {
       route(server, '/api/rwa')
       route(server, '/api/boxes')
       route(server, '/api/link')
+      route(server, '/api/leaderboard')
     },
   }
 }
