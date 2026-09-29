@@ -6,17 +6,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'audio'))
 from ftsynth import *  # noqa: E402,F403
 
 m = Mix.from_project(__file__)
-LAND, BUILD, POP, ORBIT, END = m.at(0, 8), m.at(1), m.at(2), m.at(2, 8), m.at(3, 8)
+MOVE, CENTRE, POP, END = m.at(1), m.at(1, 6), m.at(2), m.at(3, 8)
 
-# the box falls and lands
-m.pad(0.0, chord('Em9', 2), dur=POP, att=1.2, gain=0.18, cutoff=700)
-m.whoosh(0.2, LAND - 0.2, 400, 2200, 0.12)
-m.impact(LAND, gain=0.7, bright=False)
-m.kick(LAND, gain=0.6)
+# the slogan and the box come in
+m.pad(0.0, chord('Em9', 2), dur=POP, att=0.8, gain=0.18, cutoff=700)
+m.whoosh(0.1, 0.6, 600, 3000, 0.1, pan=-0.3)
+m.whoosh(0.25, 0.6, 700, 3400, 0.09, pan=-0.3)
+m.whoosh(0.2, 0.8, 500, 2400, 0.09, pan=0.4)
+
+# the slogan leaves, the box grows into the middle
+m.whoosh(MOVE, 0.8, 300, 4000, 0.16)
+m.kick(CENTRE, gain=0.5)
 
 # it trembles
-m.riser(BUILD, POP, f0=300, f1=6000, gain=0.24)
-m.drums(1, hats=range(8, 16, 1), hat_gain=0.06)
+m.riser(CENTRE, POP, f0=300, f1=6000, gain=0.24)
+m.drums(1, hats=range(12, 16, 1), hat_gain=0.06)
 
 # the lid pops, eight logos come out
 m.impact(POP, gain=0.9, bright=False)
@@ -31,4 +35,4 @@ m.add(END + 0.05, bell(midi(76)), 0.22, 0, 0.5)
 m.add(END + 0.3, bell(midi(83)), 0.14, 0.2, 0.5)
 m.pad(END, chord('Gmaj9', 3), dur=10 - END, att=0.6, gain=0.2, cutoff=1300)
 
-m.render(drive=1.8, peak=0.74)
+m.render(drive=1.5, peak=0.6)

@@ -1,10 +1,10 @@
-// Pandock launch post (4:5, 10 s, 120 BPM), no copy: a sealed box drops in, trembles, its lid pops off,
-// eight stock logos come out and circle it, then the mark and the name. Matte palette, no glow.
+// Pandock launch post (16:9, 10 s, 120 BPM): the slogan beside a sealed box, then the box grows into the middle,
+// trembles, its lid pops off, eight stock logos come out and circle it, then the mark and the name. Matte, no glow.
 // Same box and mark as the site (web/src/components/Box.tsx, Mark.tsx); logos as the site shows them.
 import { TAU, prog, rgba, E, EASE, spring, wobble, setFont, maskedText, shake, vignette, clamp, lerp } from '../../engine/core.js';
 import { LOGOS } from './logos.js';
 
-const BG = [22, 22, 24], INK = [232, 232, 234], DISC = [226, 226, 229], LOGO = [44, 44, 48];
+const BG = [22, 22, 24], INK = [232, 232, 234], BLUE = [96, 150, 214], DISC = [226, 226, 229], LOGO = [44, 44, 48];
 const ORDER = ['NVDA', 'TSLA', 'AAPL', 'AMZN', 'META', 'GOOGL', 'MSFT', 'AMD'];
 
 // The site's box, viewBox 320×300.
@@ -68,27 +68,39 @@ export default {
   },
   draw(ctx, t, api) {
     const { W, H } = api, at = api.at.bind(api);
-    const LAND = at(0, 8), BUILD = at(1), POP = at(2), ORBIT = at(2, 8), END = at(3, 8);
+    const MOVE = at(1), CENTRE = at(1, 6), POP = at(2), ORBIT = at(2, 8), END = at(3, 8);
     ctx.fillStyle = rgba(BG); ctx.fillRect(0, 0, W, H);
 
     const endP = EASE.expo(prog(t, END - 0.1, END + 0.9));
-    const [sx, sy] = shake(t, [[LAND, 14], [POP, 18]]);
+    const [sx, sy] = shake(t, [[POP, 16]]);
     ctx.save(); ctx.translate(sx, sy);
+
+    // ── bar 0: the slogan on the left, the sealed box resting on the right
+    const inP = EASE.expo(prog(t, 0.1, 0.9)), outP = E.inCubic(prog(t, MOVE, MOVE + 0.45));
+    if (outP < 1) {
+      ctx.save(); ctx.globalAlpha = 1 - outP; ctx.translate(-outP * 140, 0);
+      setFont(ctx, 700, 132, 'Inter', -5); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = rgba(INK); maskedText(ctx, 'Open the box.', W * 0.08, H * 0.46, inP, { size: 132 });
+      ctx.fillStyle = rgba(BLUE); maskedText(ctx, 'Own the market.', W * 0.08, H * 0.6, EASE.expo(prog(t, 0.25, 1.05)), { size: 132 });
+      ctx.restore();
+    }
 
     // ── the box and what comes out of it
     if (endP < 1) {
-      ctx.save(); ctx.globalAlpha = 1 - endP; ctx.translate(0, -endP * 100);
-      const cx = W / 2, base = H * 0.66, s = 2.05;
-      const fall = E.inCubic(prog(t, 0.2, LAND)), y = lerp(-80, base, fall);
-      const squash = t >= LAND && t < POP ? wobble(t - LAND, 18, 8) : 0;
-      const build = prog(t, BUILD, POP), tr = t < POP ? build * build : 0;
+      ctx.save(); ctx.globalAlpha = 1 - endP; ctx.translate(0, -endP * 80);
+      // it slides in on the right, then grows into the middle once the slogan has gone
+      const mv = EASE.expo(prog(t, MOVE + 0.15, CENTRE + 0.4));
+      const appear = EASE.expo(prog(t, 0.2, 1.1));
+      const cx = lerp(W * 0.75, W / 2, mv) + (1 - appear) * 160, base = lerp(H * 0.78, H * 0.82, mv), s = lerp(1.6, 1.75, mv);
+      const build = prog(t, CENTRE, POP), tr = t < POP ? build * build : 0;
       const jx = Math.sin(t * 90) * 7 * tr, rot = Math.sin(t * 70) * 0.035 * tr;
       const lp = prog(t, POP, POP + 0.9);
-      const lid = { y: -E.outCubic(lp) * 560, x: E.outCubic(lp) * 170, rot: E.outCubic(lp) * 0.85, a: 1 - prog(t, POP + 0.3, POP + 0.8) };
+      const lid = { y: -E.outCubic(lp) * 520, x: E.outCubic(lp) * 170, rot: E.outCubic(lp) * 0.85, a: 1 - prog(t, POP + 0.3, POP + 0.8) };
 
-      floor(ctx, cx, base + 8, 300 * s * 0.55, 60 * s * 0.55, 0.5 * clamp(fall));
-      ctx.save(); ctx.translate(cx + jx, y); ctx.rotate(rot);
-      drawBox(ctx, s, { lid, squash });
+      ctx.save(); ctx.globalAlpha *= appear;
+      floor(ctx, cx, base + 8, 300 * s * 0.55, 60 * s * 0.55, 0.5);
+      ctx.translate(cx + jx, base); ctx.rotate(rot);
+      drawBox(ctx, s, { lid });
       ctx.restore();
 
       // logos rise out of the open top, then circle the box
@@ -98,7 +110,7 @@ export default {
         if (p <= 0) return;
         const a0 = -Math.PI / 2 + (i / ORDER.length) * TAU, spin = Math.max(0, t - ORBIT) * 0.32;
         const ang = a0 + spin, q = clamp(p);
-        const ox = cx + Math.cos(ang) * 370, oy = H * 0.47 + Math.sin(ang) * 300;
+        const ox = cx + Math.cos(ang) * 560, oy = H * 0.5 + Math.sin(ang) * 330;
         const x = lerp(cx, ox, p), yy = lerp(mouth, oy, p);
         logoDisc(ctx, sym, x, yy, 30 + 34 * q);
       });
