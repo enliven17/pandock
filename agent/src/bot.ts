@@ -150,7 +150,13 @@ ${SITE}`
 async function onMessage(m: Message) {
   if (!m.text?.startsWith('/') || !m.from) return
   const cmd = m.text.split(/[\s@]/)[0].toLowerCase()
-  if (cmd === '/start' || cmd === '/help') return say(m.chat.id, HELP)
+  // The first message anyone gets: the launch video (web/public/launch.mp4), with the commands under it.
+  if (cmd === '/start')
+    return tg('sendVideo', { chat_id: m.chat.id, video: `${SITE}/launch.mp4`, caption: HELP, supports_streaming: true }).catch((e) => {
+      console.error('welcome video:', e)
+      return say(m.chat.id, HELP)
+    })
+  if (cmd === '/help') return say(m.chat.id, HELP)
   if (cmd === '/link') return link(m)
   if (cmd === '/gift') return gift(m)
   if (cmd === '/boxes') return boxes(m)
