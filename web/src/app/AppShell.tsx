@@ -36,7 +36,7 @@ export function WalletButton({ className = 'nav-cta' }: { className?: string }) 
 export default function AppShell() {
   const path = usePath()
   const boxes = useBoxes()
-  const { switchChain, isPending: switching } = useSwitchChain()
+  const { switchChain, isPending: switching, error: switchError } = useSwitchChain()
   const Page = path.startsWith('/app/boxes') ? BoxesPage : path.startsWith('/app/gift') ? GiftPage : path.startsWith('/app/link') ? LinkPage : path.startsWith('/app/leaderboard') ? LeaderboardPage : BuyPage
   // The leaderboard is public; every other page needs a wallet.
   const open = Page === LeaderboardPage
@@ -87,6 +87,7 @@ export default function AppShell() {
             )}
           </div>
         )}
+        {boxes.wrongChain && switchError && <NetworkHelp />}
 
         {boxes.isConnected || open ? (
           <Page boxes={boxes} />
@@ -102,6 +103,34 @@ export default function AppShell() {
           </section>
         )}
       </main>
+    </div>
+  )
+}
+
+/** Shown when the wallet refused to switch: some (Coinbase Smart Wallet) can't reach custom networks at all,
+ *  others need the network added by hand. */
+function NetworkHelp() {
+  const rows = [
+    ['Network', chain.name],
+    ['RPC URL', chain.rpcUrls.default.http[0]],
+    ['Chain ID', String(chain.id)],
+    ['Currency', chain.nativeCurrency.symbol],
+    ['Explorer', chain.blockExplorers?.default.url ?? ''],
+  ]
+  return (
+    <div className="network-help">
+      <p className="body-strong">Your wallet didn’t switch to {chain.name}.</p>
+      <p className="caption muted">
+        Coinbase Smart Wallet can’t use {chain.name}; use the Coinbase Wallet app, MetaMask or Rabby instead. Or add the network by hand:
+      </p>
+      <dl>
+        {rows.map(([k, v]) => (
+          <div key={k}>
+            <dt className="caption muted">{k}</dt>
+            <dd className="caption">{v}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   )
 }
