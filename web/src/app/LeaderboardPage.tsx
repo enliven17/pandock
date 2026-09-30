@@ -13,12 +13,30 @@ type Row = { rank: number; wallet: string; bought: number; opened: number; invit
 function InvitePanel({ address, me }: { address: string; me: Row | null | undefined }) {
   const { data } = useReferral(address)
   const [copied, setCopied] = useState(false)
+  const cardUrl = data ? `/api/og?code=${data.code}` : ''
+  // Fetched ahead of the tap: the share sheet has to open inside the click, with no await in between.
+  const { data: card } = useQuery({
+    queryKey: ['invite-card', data?.code],
+    enabled: !!data,
+    staleTime: 5 * 60_000,
+    queryFn: async () => new File([await (await fetch(cardUrl)).blob()], 'pandock-invite.png', { type: 'image/png' }),
+  })
   if (!data) return null
   const link = `${window.location.origin}/r/${data.code}`
   const text = me
     ? `I'm #${me.rank} on the Pandock testnet leaderboard with ${me.score} points. Sealed boxes of tokenized stocks, 0.10 USDC each. Grab one with my link:`
     : 'Sealed boxes of tokenized stocks, 0.10 USDC each, now on testnet. Grab one with my link:'
-  const share = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`
+  const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`
+  // On phones, hand the card itself to the share sheet so the X app attaches it as an image. X's web intent can't
+  // carry files, so elsewhere the post goes out as text + link, and the link unfurls into the same card.
+  const share = (e: React.MouseEvent) => {
+    const files = card ? [card] : []
+    if (!files.length || !matchMedia('(pointer: coarse)').matches || !navigator.canShare?.({ files })) return
+    e.preventDefault()
+    navigator.share({ files, text: `${text} ${link}` }).catch((err: Error) => {
+      if (err.name !== 'AbortError') window.open(intent, '_blank', 'noopener')
+    })
+  }
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link)
@@ -41,7 +59,8 @@ function InvitePanel({ address, me }: { address: string; me: Row | null | undefi
       </div>
       <div className="invite-actions">
         <button className="btn-light" onClick={copy}>{copied ? 'Copied' : 'Copy link'}</button>
-        <a className="btn-primary" href={share} target="_blank" rel="noreferrer">Share on X</a>
+        <a className="btn-light" href={cardUrl} download="pandock-invite.png">Download card</a>
+        <a className="btn-primary" href={intent} target="_blank" rel="noreferrer" onClick={share}>Share on X</a>
       </div>
     </div>
   )
