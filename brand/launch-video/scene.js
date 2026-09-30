@@ -119,14 +119,18 @@ export default {
 
     // ── the mark and the name, nothing else
     if (endP > 0) {
-      const m = spring(t - END - 0.05, 12, 7), size = 260 * clamp(m);
-      if (size > 1) {
-        ctx.save(); ctx.translate(W / 2 - size / 2, H * 0.43 - (size * MARK_H / MARK_W) / 2);
-        ctx.scale(size / MARK_W, size / MARK_W); ctx.fillStyle = rgba(INK); ctx.fill(mark); ctx.restore();
+      // the site's lockup: the mark on the left, the name on the right, centred together
+      setFont(ctx, 700, 132, 'Inter', -4.5);
+      const tw = ctx.measureText('Pandock').width, mw = 190, mh = (mw * MARK_H) / MARK_W, gap = 36;
+      const x0 = W / 2 - (mw + gap + tw) / 2, cy = H / 2;
+      const k = clamp(spring(t - END - 0.05, 12, 7));
+      if (k > 0.01) {
+        ctx.save(); ctx.translate(x0 + mw / 2, cy); ctx.scale(k, k); ctx.translate(-mw / 2, -mh / 2);
+        ctx.scale(mw / MARK_W, mw / MARK_W); ctx.fillStyle = rgba(INK); ctx.fill(mark); ctx.restore();
       }
-      const p = EASE.expo(prog(t, END + 0.25, END + 1.0));
-      setFont(ctx, 700, 124, 'Inter', -4.5); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = rgba(INK); maskedText(ctx, 'Pandock', W / 2, H * 0.62, p, { size: 124 });
+      const p = EASE.expo(prog(t, END + 0.2, END + 0.95));
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = rgba(INK);
+      maskedText(ctx, 'Pandock', x0 + mw + gap, cy + 132 * 0.36, p, { size: 132 });
     }
     ctx.restore();
   },
