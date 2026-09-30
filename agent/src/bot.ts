@@ -13,7 +13,7 @@ import { decide, sql } from './log.js'
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const OWNER = process.env.TELEGRAM_OWNER_ID // the human who approves escalations
-const SITE = process.env.SITE_URL ?? 'https://pandock.vercel.app'
+const SITE = process.env.SITE_URL ?? 'https://pandock.xyz'
 const MAX_GIFT = 5
 
 type User = { id: number; username?: string; first_name: string }
