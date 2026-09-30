@@ -494,7 +494,7 @@ ul { list-style: none; }
 
 /* Leaderboard */
 .lb-list { list-style: none; display: flex; flex-direction: column; gap: 4px; max-width: 880px; }
-.lb-row { display: grid; grid-template-columns: 56px 1fr 90px 110px; gap: 16px; align-items: center; padding: 16px 20px; border-radius: var(--r-md); font-variant-numeric: tabular-nums; }
+.lb-row { display: grid; grid-template-columns: 56px 1fr 80px 80px 100px; gap: 16px; align-items: center; padding: 16px 20px; border-radius: var(--r-md); font-variant-numeric: tabular-nums; }
 .lb-row:nth-child(even) { background: var(--parchment); }
 .lb-head { font-size: 13px; color: var(--ink-48); padding-bottom: 6px; background: none !important; }
 .lb-rank { font-family: var(--display); font-size: 21px; font-weight: 600; color: var(--ink-48); }
@@ -506,10 +506,20 @@ ul { list-style: none; }
 .lb-row.is-top .lb-bought { font-size: 30px; }
 .lb-row.is-me { background: var(--ink) !important; color: #fff; }
 .lb-row.is-me .muted, .lb-row.is-me .lb-rank { color: rgb(255 255 255 / 0.7); }
-@media (max-width: 640px) { .lb-row { grid-template-columns: 36px 1fr 60px 70px; gap: 10px; padding: 14px 12px; } }
+@media (max-width: 640px) { .lb-row { grid-template-columns: 30px 1fr 44px 50px 56px; gap: 8px; padding: 14px 10px; font-size: 14px; } .lb-bought, .lb-row.is-top .lb-bought { font-size: 20px; } }
 
 /* Wallet refused to switch networks: how to get onto the right one */
 .network-help { align-self: center; max-width: 560px; margin-top: 12px; padding: 20px 24px; border-radius: var(--r-lg); background: var(--parchment); display: flex; flex-direction: column; gap: 8px; }
 .network-help dl { display: grid; gap: 6px; margin-top: 6px; }
 .network-help dl > div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; }
 .network-help dd { word-break: break-all; font-variant-numeric: tabular-nums; }
+
+/* Invites: the banner for an invited wallet, the panel with your own link */
+.status-dot-invite { background: #6096d6; }
+.status-dismiss { font-size: 18px; line-height: 1; color: var(--ink-48); padding: 0 6px; }
+.invite-banner { flex-wrap: wrap; }
+.invite-panel { max-width: 880px; margin-bottom: 28px; padding: 22px 24px; border-radius: var(--r-lg); background: var(--parchment); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.invite-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.invite-link { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.invite-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.invite-actions .btn-primary, .invite-actions .btn-light { font-size: 15px; padding: 10px 20px; }
