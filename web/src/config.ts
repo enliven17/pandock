@@ -42,8 +42,10 @@ export const wagmiConfig = createConfig(
     appIcon: '/pandock-logo.svg',
     // Off: it adds a "Continue with Aave" account button, and its SDK throws when not set up.
     enableAaveAccount: false,
-    // Coinbase Wallet SDK otherwise injects an analytics script on load (and logs an error when it can't).
-    coinbaseWalletPreference: { options: 'all', telemetry: false },
+    // telemetry off: the Coinbase Wallet SDK otherwise injects an analytics script on load (and logs an error when it can't).
+    // eoaOnly: Coinbase Smart Wallet only knows the networks Coinbase supports and can't reach Arc Testnet;
+    // the Coinbase Wallet app (and its extension) can add custom networks.
+    coinbaseWalletPreference: { options: 'eoaOnly', telemetry: false },
   }),
 )
 
