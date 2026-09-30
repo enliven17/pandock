@@ -6,6 +6,7 @@ import {Pandock, IPriceSource} from "../src/Pandock.sol";
 import {MockMarket} from "../src/MockMarket.sol";
 import {AgentForwarder} from "../src/AgentForwarder.sol";
 import {GiftJar} from "../src/GiftJar.sol";
+import {ShareDesk, IPandockBuy} from "../src/ShareDesk.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 interface IArcOracle {
@@ -57,6 +58,7 @@ contract Deploy is MainnetPrices {
     uint96 constant EMPTY_WEIGHT = 256;
     uint256 constant POOL_USD = 500e6; // seed each stock's pool with $500 of mock shares
     address giftJar; // storage, not a local: run() is at the stack limit
+    address shareDesk;
 
     function run() external {
         bool mainnet = vm.envOr("MAINNET", false);
@@ -77,6 +79,8 @@ contract Deploy is MainnetPrices {
             console.log("AgentForwarder", operator);
             giftJar = address(new GiftJar(IERC1155(address(box)), agentWallet, 5));
             console.log("GiftJar", giftJar);
+            shareDesk = address(new ShareDesk(IPandockBuy(address(box)), IPriceSource(address(market))));
+            console.log("ShareDesk (fund it with USDC)", shareDesk);
         }
         (string[8] memory sym,) = stocks();
         address[8] memory tok;
@@ -124,6 +128,7 @@ contract Deploy is MainnetPrices {
         vm.serializeAddress(o, "operator", operator);
         vm.serializeAddress(o, "agentWallet", agentWallet);
         if (giftJar != address(0)) vm.serializeAddress(o, "giftJar", giftJar);
+        if (shareDesk != address(0)) vm.serializeAddress(o, "shareDesk", shareDesk);
         string memory json = vm.serializeString(o, "stocks", stocksJson);
         vm.writeJson(json, "../web/src/deployments/arc-testnet.json");
     }

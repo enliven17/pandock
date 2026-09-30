@@ -15,5 +15,6 @@
     "TSLA.arc": "0xCb59dE9e54E517E84Ac134E09a6780ADd1caFe8a"
   },
   "giftJar": "0xc9Cad599da446DbB6F829c613e0062735b4027d7",
-  "deployBlock": 64417021
+  "deployBlock": 64417021,
+  "shareDesk": "0x0C91c273fbe3Ec855F7c834B092dbba368559715"
 }
