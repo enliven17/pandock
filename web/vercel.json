@@ -1,4 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/((?!api/|assets/).*)", "destination": "/index.html" }]
+  "functions": {
+    "api/og.ts": { "includeFiles": "node_modules/harfbuzzjs/hb.wasm" }
+  },
+  "rewrites": [
+    { "source": "/r/:code", "destination": "/api/r?code=:code" },
+    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
+  ]
 }

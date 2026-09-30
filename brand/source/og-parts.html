@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pandock OG parts</title>
+  <link rel="stylesheet" href="base.css" />
+  <style>
+    /* Transparent pieces the invite card (web/api/og.ts) lays out: ?part=box | mark */
+    html, body { background: transparent; }
+    #part { width: 600px; }
+    #part svg { width: 100%; height: auto; display: block; }
+    body.box #part { padding: 0 0 60px; filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.55)); }
+  </style>
+</head>
+<body>
+  <div id="part"></div>
+  <script type="module">
+    import { boxSVG, markSVG } from './parts.js'
+    const part = new URLSearchParams(location.search).get('part')
+    document.body.className = part
+    document.getElementById('part').innerHTML = part === 'mark' ? markSVG('#e8e8ea') : boxSVG()
+  </script>
+</body>
+</html>

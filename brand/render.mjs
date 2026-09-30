@@ -22,19 +22,22 @@ const browser = await puppeteer.launch({
   executablePath: process.env.CHROME_PATH ?? 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
   headless: true,
 })
-for (const [page, out, w, h] of [
+for (const [page, out, w, h, transparent] of [
   ['profile.html', 'x-profile.png', 400, 400],
   ['banner.html', 'x-banner.png', 1500, 500],
   // the bot's photo cards, served by the site from web/public/tg/
   ['tg.html?kind=linked', '../web/public/tg/linked.png', 1280, 720],
   ['tg.html?kind=gift', '../web/public/tg/gift.png', 1280, 720],
   ['tg.html?kind=bought', '../web/public/tg/bought.png', 1280, 720],
+  // transparent pieces for the invite card (web/api/og.ts)
+  ['og-parts.html?part=box', '../web/public/og/box.png', 600, 623, true],
+  ['og-parts.html?part=mark', '../web/public/og/mark.png', 600, 492, true],
 ]) {
   const tab = await browser.newPage()
   await tab.setViewport({ width: w, height: h, deviceScaleFactor: out.includes('/tg/') ? 1 : 2 }) // Telegram recompresses photos; 1× is plenty
   await tab.goto(`http://localhost:${port}/${page}`, { waitUntil: 'networkidle0' })
   await tab.evaluate(() => document.fonts.ready)
-  await tab.screenshot({ path: fileURLToPath(new URL(`./${out}`, import.meta.url)), clip: { x: 0, y: 0, width: w, height: h } })
+  await tab.screenshot({ path: fileURLToPath(new URL(`./${out}`, import.meta.url)), clip: { x: 0, y: 0, width: w, height: h }, omitBackground: !!transparent })
   console.log('wrote', out)
 }
 await browser.close()
