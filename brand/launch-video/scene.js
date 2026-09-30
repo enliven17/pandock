@@ -94,8 +94,8 @@ export default {
       const cx = lerp(W * 0.75, W / 2, mv) + (1 - appear) * 160, base = lerp(H * 0.78, H * 0.82, mv), s = lerp(1.6, 1.75, mv);
       const build = prog(t, CENTRE, POP), tr = t < POP ? build * build : 0;
       const jx = Math.sin(t * 90) * 7 * tr, rot = Math.sin(t * 70) * 0.035 * tr;
-      const lp = prog(t, POP, POP + 0.9);
-      const lid = { y: -E.outCubic(lp) * 520, x: E.outCubic(lp) * 170, rot: E.outCubic(lp) * 0.85, a: 1 - prog(t, POP + 0.3, POP + 0.8) };
+      const lp = prog(t, POP, POP + 0.5);
+      const lid = { y: -E.outCubic(lp) * 620, x: E.outCubic(lp) * 620, rot: E.outCubic(lp) * 1.1, a: 1 - prog(t, POP + 0.2, POP + 0.45) };
 
       ctx.save(); ctx.globalAlpha *= appear;
       floor(ctx, cx, base + 8, 300 * s * 0.55, 60 * s * 0.55, 0.5);
@@ -106,7 +106,7 @@ export default {
       // logos rise out of the open top, then circle the box
       const mouth = base - 175 * s;
       ORDER.forEach((sym, i) => {
-        const t0 = POP + 0.08 + i * api.step * 0.5, p = spring(t - t0, 10, 6);
+        const t0 = POP + 0.3 + i * api.step * 0.5, p = spring(t - t0, 10, 6);
         if (p <= 0) return;
         const a0 = -Math.PI / 2 + (i / ORDER.length) * TAU, spin = Math.max(0, t - ORBIT) * 0.32;
         const ang = a0 + spin, q = clamp(p);

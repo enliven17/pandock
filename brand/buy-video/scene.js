@@ -106,8 +106,8 @@ export default {
       const build = prog(t, TAP, POP), tr = t < POP ? build * build : 0;
       const tapped = t >= TAP && t < POP ? Math.exp(-(t - TAP) * 12) : 0;
       const jx = Math.sin(t * 90) * 7 * tr, rot = Math.sin(t * 70) * 0.035 * tr;
-      const lp = prog(t, POP, POP + 0.9);
-      const lid = { y: -E.outCubic(lp) * 460, x: E.outCubic(lp) * 160, rot: E.outCubic(lp) * 0.85, a: 1 - prog(t, POP + 0.3, POP + 0.8) };
+      const lp = prog(t, POP, POP + 0.5);
+      const lid = { y: -E.outCubic(lp) * 620, x: E.outCubic(lp) * 560, rot: E.outCubic(lp) * 1.1, a: 1 - prog(t, POP + 0.2, POP + 0.45) };
       // once the prize is out the box steps back and fades, so the prize reads on its own
       const away = E.outCubic(prog(t, POP + 0.35, POP + 1.1));
       ctx.save(); ctx.globalAlpha *= appear * (1 - 0.85 * away); ctx.translate(0, (1 - appear) * 40 + away * 90);
@@ -120,11 +120,11 @@ export default {
       buyButton(ctx, bx, btnY, t, CLICK, appear * (1 - prog(t, TAP - 0.3, TAP)));
 
       // the prize: NVDA rises out of the box and settles above it, with what it is worth
-      const pz = spring(t - POP - 0.1, 9, 6);
+      const pz = spring(t - POP - 0.3, 9, 6);
       if (pz > 0) {
         const mouth = base - 175 * s, y = lerp(mouth, H * 0.3, clamp(pz)), r = 40 + 70 * clamp(pz);
         logoDisc(ctx, 'NVDA', cx, y, r);
-        const q = EASE.expo(prog(t, POP + 0.45, POP + 1.1));
+        const q = EASE.expo(prog(t, POP + 0.6, POP + 1.25));
         setFont(ctx, 700, 88, 'Inter', -3); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = rgba(INK); maskedText(ctx, '$2.00 of NVDA', cx, H * 0.3 + 200, q, { size: 88 });
       }
