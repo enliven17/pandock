@@ -8,6 +8,7 @@ import Logo from '../components/Logo'
 import { hasLogo } from '../components/logos'
 import PageHeader from './PageHeader'
 import RevealStage, { type Result } from './RevealStage'
+import SharesPanel from './SharesPanel'
 import type { Boxes } from './AppShell'
 import type { Opening } from './useBoxes'
 
@@ -173,6 +174,7 @@ export default function BoxesPage({ boxes }: { boxes: Boxes }) {
           </div>
         </div>
       )}
+      <SharesPanel boxes={boxes} />
       {error && <p className="caption error">{error}</p>}
       {stage && <RevealStage from={stage.from} result={stage.result} onClose={() => setStage(null)} />}
     </section>

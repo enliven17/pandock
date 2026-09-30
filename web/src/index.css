@@ -523,3 +523,14 @@ ul { list-style: none; }
 .invite-link { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .invite-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .invite-actions .btn-primary, .invite-actions .btn-light { font-size: 15px; padding: 10px 20px; }
+
+/* Your shares: sell them back or trade them in for boxes */
+.shares { display: flex; flex-direction: column; gap: 16px; margin-top: 48px; }
+.shares-card { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: center; background: var(--parchment); border-radius: var(--r-lg); padding: 24px 28px; }
+.shares-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.shares-row { display: grid; grid-template-columns: 28px 70px 1fr auto; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+.shares-logo { width: 22px; height: 22px; }
+.shares-value { font-family: var(--display); font-weight: 600; }
+.shares-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.shares-actions button { font-size: 15px; padding: 12px 20px; }
+@media (max-width: 833px) { .shares-card { grid-template-columns: 1fr; padding: 20px; } }

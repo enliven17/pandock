@@ -134,6 +134,18 @@ export const pandockAbi = parseAbi([
 /** The jar the Telegram bot gifts from: park boxes with a plain transfer, take them back any time. */
 export const GIFT_JAR = (onTestnet ? (testnet as { giftJar?: string }).giftJar : undefined) as `0x${string}` | undefined
 export const TELEGRAM_BOT = 'pandockbot'
+/** Buys prize shares back at the relayed ArcStocks price, or trades them in for new boxes. */
+export const SHARE_DESK = (onTestnet ? (testnet as { shareDesk?: string }).shareDesk : undefined) as `0x${string}` | undefined
+export const deskAbi = parseAbi([
+  'function quote(address token, uint256 amount) view returns (uint256)',
+  'function sellAll(address[] tokens, uint256[] amounts) returns (uint256)',
+  'function trade(address[] tokens, uint256[] amounts) returns (uint256)',
+])
+export const erc20Abi = parseAbi([
+  'function balanceOf(address) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+])
 export const X_HANDLE = 'openPandock'
 export const jarAbi = parseAbi([
   'function deposits(address) view returns (uint256)',
