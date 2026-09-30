@@ -5,16 +5,18 @@ import { gsap, reducedMotion, useGSAP } from '../motion'
 import { INVITE_POINTS } from '../referral'
 import { useReferral } from './useReferral'
 import PageHeader from './PageHeader'
+import ShareCard from './ShareCard'
 import type { Boxes } from './AppShell'
 
 type Row = { rank: number; wallet: string; bought: number; opened: number; invites: number; score: number; telegram: string | null }
 
-/** Your invite link, how it is doing, and one tap to post it on X (the link unfurls into a card with your standing). */
+/** Your invite link, how it is doing, and a share button that shows the card before it goes to X. */
 function InvitePanel({ address, me }: { address: string; me: Row | null | undefined }) {
   const { data } = useReferral(address)
   const [copied, setCopied] = useState(false)
+  const [sharing, setSharing] = useState(false)
   const cardUrl = data ? `/api/og?code=${data.code}` : ''
-  // Fetched ahead of the tap: the share sheet has to open inside the click, with no await in between.
+  // Fetched ahead of the tap: the share sheet and the clipboard both need it ready inside the click.
   const { data: card } = useQuery({
     queryKey: ['invite-card', data?.code],
     enabled: !!data,
@@ -24,19 +26,8 @@ function InvitePanel({ address, me }: { address: string; me: Row | null | undefi
   if (!data) return null
   const link = `${window.location.origin}/r/${data.code}`
   const text = me
-    ? `I'm #${me.rank} on the Pandock testnet leaderboard with ${me.score} points. Sealed boxes of tokenized stocks, 0.10 USDC each. Grab one with my link:`
+    ? `I'm #${me.rank} on the Pandock testnet leaderboard with ${me.score} point${me.score === 1 ? '' : 's'}. Sealed boxes of tokenized stocks, 0.10 USDC each. Grab one with my link:`
     : 'Sealed boxes of tokenized stocks, 0.10 USDC each, now on testnet. Grab one with my link:'
-  const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`
-  // On phones, hand the card itself to the share sheet so the X app attaches it as an image. X's web intent can't
-  // carry files, so elsewhere the post goes out as text + link, and the link unfurls into the same card.
-  const share = (e: React.MouseEvent) => {
-    const files = card ? [card] : []
-    if (!files.length || !matchMedia('(pointer: coarse)').matches || !navigator.canShare?.({ files })) return
-    e.preventDefault()
-    navigator.share({ files, text: `${text} ${link}` }).catch((err: Error) => {
-      if (err.name !== 'AbortError') window.open(intent, '_blank', 'noopener')
-    })
-  }
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link)
@@ -59,9 +50,9 @@ function InvitePanel({ address, me }: { address: string; me: Row | null | undefi
       </div>
       <div className="invite-actions">
         <button className="btn-light" onClick={copy}>{copied ? 'Copied' : 'Copy link'}</button>
-        <a className="btn-light" href={cardUrl} download="pandock-invite.png">Download card</a>
-        <a className="btn-primary" href={intent} target="_blank" rel="noreferrer" onClick={share}>Share on X</a>
+        <button className="btn-primary" onClick={() => setSharing(true)}>Share</button>
       </div>
+      {sharing && <ShareCard card={card} cardUrl={cardUrl} text={text} link={link} onClose={() => setSharing(false)} />}
     </div>
   )
 }

@@ -534,3 +534,14 @@ ul { list-style: none; }
 .shares-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
 .shares-actions button { font-size: 15px; padding: 12px 20px; }
 @media (max-width: 833px) { .shares-card { grid-template-columns: 1fr; padding: 20px; } }
+
+/* Share: the invite card on screen before it goes to X */
+.share-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; }
+.share-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 0.72); backdrop-filter: blur(6px); }
+.share-sheet { position: relative; width: min(680px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; background: var(--canvas); border-radius: var(--r-lg); padding: 52px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.share-card { width: 100%; height: auto; border-radius: var(--r-md); display: block; background: #161618; }
+.share-text { line-height: 1.45; }
+.share-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.share-close { position: absolute; top: 8px; right: 10px; width: 36px; height: 36px; font-size: 24px; line-height: 1; color: var(--ink-48); border-radius: 50%; }
+.share-close:hover { background: var(--parchment); }
+.share-actions .btn-light { background: var(--parchment); }
