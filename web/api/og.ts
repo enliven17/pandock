@@ -5,6 +5,10 @@
 import { neon } from '@neondatabase/serverless'
 import { Resvg } from '@resvg/resvg-js'
 import satori from 'satori'
+import deployment from '../src/deployments/arc-testnet.json' with { type: 'json' }
+
+// same exclusion as api/leaderboard.ts: the ShareDesk's trade-in boxes don't score
+const DESK = ((deployment as { shareDesk?: string }).shareDesk ?? '').toLowerCase()
 type El = { type: string; props: Record<string, unknown> }
 const el = (type: string, style: Record<string, unknown>, ...children: (El | string)[]): El => ({
   type,
@@ -19,7 +23,7 @@ async function standing(code: string | null) {
   const sql = neon(url)
   const rows = (await sql`
     with me as (select wallet from referral_codes where code = ${code}),
-         bought as (select buyer as wallet, sum(amount)::int as bought from purchases group by buyer),
+         bought as (select buyer as wallet, sum(amount)::int as bought from purchases where buyer <> ${DESK} group by buyer),
          invited as (select r.referrer as wallet, count(*)::int as invites from referrals r
                      where exists (select 1 from purchases p where p.buyer = r.referee) group by r.referrer),
          scored as (select w.wallet, coalesce(b.bought, 0) + 3 * coalesce(i.invites, 0) as score

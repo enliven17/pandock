@@ -9,6 +9,9 @@ import { isAddress } from 'viem'
 import deployment from '../src/deployments/arc-testnet.json' with { type: 'json' }
 
 const PANDOCK = deployment.pandock.toLowerCase()
+// Boxes the ShareDesk buys for people trading shares in don't score: it would top the table, and shares recycled
+// into boxes shouldn't mint points.
+const DESK = ((deployment as { shareDesk?: string }).shareDesk ?? '').toLowerCase()
 export const INVITE_POINTS = 3
 
 export type Row = { rank: number; wallet: string; bought: number; opened: number; invites: number; score: number; telegram: string | null }
@@ -28,7 +31,7 @@ export async function GET(req: Request): Promise<Response> {
     const sql = neon(url)
     await sql`create table if not exists referrals (referee text primary key, referrer text not null, created_at timestamptz not null default now())`
     const rows = (await sql`
-      with bought as (select buyer as wallet, sum(amount)::int as bought from purchases group by buyer),
+      with bought as (select buyer as wallet, sum(amount)::int as bought from purchases where buyer <> ${DESK} group by buyer),
            opened as (select opener as wallet, count(*)::int as opened from openings where pandock = ${PANDOCK} group by opener),
            invited as (select r.referrer as wallet, count(*)::int as invites from referrals r
                        where exists (select 1 from purchases p where p.buyer = r.referee) group by r.referrer),
