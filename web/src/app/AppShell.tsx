@@ -12,6 +12,7 @@ import BoxesPage from './BoxesPage'
 import GiftPage from './GiftPage'
 import LinkPage from './LinkPage'
 import LeaderboardPage from './LeaderboardPage'
+import InviteBanner from './InviteBanner'
 
 const TABS = [
   { to: '/app', label: 'Buy' },
@@ -88,6 +89,7 @@ export default function AppShell() {
           </div>
         )}
         {boxes.wrongChain && switchError && <NetworkHelp />}
+        {boxes.address && !boxes.wrongChain && <InviteBanner address={boxes.address} />}
 
         {boxes.isConnected || open ? (
           <Page boxes={boxes} />

@@ -6,6 +6,10 @@ import { ConnectKitProvider } from 'connectkit'
 import { wagmiConfig } from './config'
 import App from './App'
 import './index.css'
+import { captureRef } from './referral'
+
+// Keep an invite code from /r/<code> (?ref=) until a wallet accepts it.
+captureRef()
 
 const queryClient = new QueryClient()
 
