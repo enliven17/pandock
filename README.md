@@ -2,6 +2,8 @@
 
 Sealed boxes of tokenized stocks on Arc. Buy with USDC, gift them sealed, open for a random slice of a real stock (ArcStocks `STOCK.arc`, backed 1:1 on Robinhood Chain).
 
+Live on Arc Testnet: **https://pandock.xyz** · X [@openPandock](https://x.com/openPandock) · Telegram [@pandockbot](https://t.me/pandockbot)
+
 ## Contracts (`contracts/`, Foundry)
 
 ```sh
