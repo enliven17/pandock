@@ -31,7 +31,7 @@ function drawBox(ctx, s, { lid, squash = 0 }) {
   ctx.scale(s * (1 + squash * 0.06), s * (1 - squash * 0.1)); ctx.translate(-160, -280);
   face(ctx, FACES.top); face(ctx, FACES.left); face(ctx, FACES.right);
   if (lid.a > 0.01) {
-    ctx.save(); ctx.globalAlpha = lid.a;
+    ctx.save(); ctx.globalAlpha *= lid.a; // multiply: the lid fades with the box
     ctx.translate(160 + lid.x, 90 + lid.y); ctx.rotate(lid.rot); ctx.translate(-160, -90);
     face(ctx, FACES.lidL); face(ctx, FACES.lidR); face(ctx, FACES.lidTop);
     const k = (130 / MARK_W) * 0.55, [a, b, c, d] = [k, -k / 2, k, k / 2], [mx, my] = [MARK_W / 2, MARK_H / 2];

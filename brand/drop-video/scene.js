@@ -29,7 +29,7 @@ function drawBox(ctx, s, { lid, squash = 0 }) {
   ctx.scale(s * (1 + squash * 0.06), s * (1 - squash * 0.1)); ctx.translate(-160, -280);
   face(ctx, FACES.top); face(ctx, FACES.left); face(ctx, FACES.right);
   if (lid.a > 0.01) {
-    ctx.save(); ctx.globalAlpha = lid.a;
+    ctx.save(); ctx.globalAlpha *= lid.a; // multiply: the lid fades with the box
     ctx.translate(160 + lid.x, 90 + lid.y); ctx.rotate(lid.rot); ctx.translate(-160, -90);
     face(ctx, FACES.lidL); face(ctx, FACES.lidR); face(ctx, FACES.lidTop);
     const k = (130 / MARK_W) * 0.55, [a, b, c, d] = [k, -k / 2, k, k / 2], [mx, my] = [MARK_W / 2, MARK_H / 2];
@@ -104,7 +104,7 @@ export default {
 
     if (endP < 1) {
       // the stage clears quickly so the lockup lands on an empty canvas
-      ctx.save(); ctx.globalAlpha = 1 - clamp(prog(t, END - 0.25, END + 0.2));
+      ctx.save(); ctx.globalAlpha = 1 - clamp(prog(t, END - 0.45, END - 0.05)); // fully gone before the lockup starts
       setFont(ctx, 700, 124, 'Inter', -4.5); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = rgba(INK); maskedText(ctx, 'Drop your EVM wallet.', W / 2, H * 0.2, EASE.expo(prog(t, ASK, ASK + 0.8)), { size: 124 });
 
@@ -132,7 +132,7 @@ export default {
       setFont(ctx, 700, 132, 'Inter', -4.5);
       const tw = ctx.measureText('Pandock').width, mw = 190, mh = (mw * MARK_H) / MARK_W, gap = 36;
       const x0 = W / 2 - (mw + gap + tw) / 2, cy = H / 2;
-      const k = clamp(spring(t - END - 0.05, 12, 7));
+      const k = clamp(spring(t - END - 0.1, 12, 7));
       if (k > 0.01) {
         ctx.save(); ctx.translate(x0 + mw / 2, cy); ctx.scale(k, k); ctx.translate(-mw / 2, -mh / 2);
         ctx.scale(mw / MARK_W, mw / MARK_W); ctx.fillStyle = rgba(INK); ctx.fill(mark); ctx.restore();
