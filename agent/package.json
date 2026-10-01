@@ -10,6 +10,7 @@
     "once": "tsx --env-file-if-exists=.env src/index.ts --once",
     "approve": "tsx --env-file-if-exists=.env src/approve.ts",
     "circle-home": "tsx src/pack-circle-home.ts",
+    "smoke": "tsx --env-file-if-exists=.env src/smoke.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
