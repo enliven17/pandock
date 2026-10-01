@@ -51,7 +51,7 @@ function edge(ctx, f, p) {
 
 /** Something travelling along an edge between t0 and t1: a label chip, or a stock logo. */
 function packet(ctx, f, t, t0, t1, what) {
-  const a = prog(t, t0 - 0.15, t0) * (1 - prog(t, t1, t1 + 0.2));
+  const a = prog(t, t0 - 0.15, t0) * (1 - prog(t, t1 - 0.3, t1)); // gone before it reaches the node
   if (a <= 0.01) return;
   const [x, y] = f(E.inOutCubic(prog(t, t0, t1)));
   ctx.save(); ctx.globalAlpha *= a;
@@ -95,8 +95,9 @@ export default {
       ctx.restore();
     }
 
-    // bars 1–6: the diagram, one piece a bar; it steps back for the last line
-    const dim = 1 - 0.75 * EASE.expo(prog(t, B[6] - 0.1, B[6] + 0.6)), out = 1 - prog(t, END - 0.4, END - 0.05);
+    // bars 1–6: the diagram, one piece a bar
+    // gone before the last line comes in, so nothing sits behind it
+    const dim = 1 - prog(t, B[6] - 0.3, B[6] + 0.05), out = 1;
     ctx.save(); ctx.globalAlpha = dim * out;
     const pop = (t0) => spring(t - t0, 12, 8);
     const draw = (t0, dur = 0.6) => E.outCubic(prog(t, t0, t0 + dur));
